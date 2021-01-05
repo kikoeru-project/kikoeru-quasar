@@ -1,9 +1,10 @@
 <template> 
   <vue-plyr ref="plyr"
-    :emit="['canplay', 'timeupdate', 'ended']"
+    :emit="['canplay', 'timeupdate', 'ended', 'seeked']"
     @canplay="onCanplay()"
     @timeupdate="onTimeupdate()"
     @ended="onEnded()"
+    @seeked="onSeeked()"
   >
     <audio crossorigin="anonymous" >
       <source v-if="source" :src="source" />
@@ -12,8 +13,17 @@
 </template>
 
 <script>
+import Lyric from 'lrc-file-parser'
+
 export default {
   name: 'AudioElement',
+
+  data() {
+    return {
+      lrcObj: null,
+      lrcAvailable: false,
+    }
+  },
 
   computed: {
     player () {
@@ -56,13 +66,15 @@ export default {
       if (this.player.duration) {
         // 缓冲至可播放状态
         flag ? this.player.play() : this.player.pause()
-      }     
+      }
+      this.playLrc(flag);
     },
 
     source (url) {
       if (url) {   
         // 加载新音频/视频文件
-        this.player.media.load()
+        this.player.media.load();
+        this.loadLrcFile();
       }
     },
 
@@ -130,12 +142,91 @@ export default {
             this.$store.commit('AudioPlayer/NEXT_TRACK')
           }
       }
+    },
+
+    onSeeked() {
+      if (this.lrcAvailable) {
+        this.lrcObj.play(this.player.currentTime * 1000);
+      }
+    },
+
+
+    playLrc (playStatus) {
+      if (this.lrcAvailable) {
+        if (playStatus) {
+          this.lrcObj.play(this.player.currentTime * 1000);
+        } else {
+          this.lrcObj.pause();
+        }
+      }
+    },
+
+    initLrcObj () {
+        let dom_lyric = document.getElementById('lyric');
+        this.lrcObj = new Lyric({
+          onPlay: function (line, text) {
+            //console.log(line, text);
+            dom_lyric.innerHTML = text;
+          },
+        })
+    },
+
+    loadLrcFile () {
+      const token = this.$q.localStorage.getItem('jwt-token') || '';
+      const fileHash = this.queue[this.queueIndex].hash;
+      const url = `/api/check-lrc/${fileHash}?token=${token}`;
+
+      this.$axios.get(url)
+        .then((response) => {
+          if (response.data.result) {
+            // 有lrc歌词文件
+            this.lrcAvailable = true;
+            console.log('读入歌词');
+            const lrcUrl = `/api/stream/${response.data.hash}?token=${token}`;
+            this.$axios.get(lrcUrl)
+              .then(response => {
+                console.log('歌词读入成功');
+                this.lrcObj.setLyric(response.data);
+                this.lrcObj.play(this.player.currentTime * 1000);
+              });
+          } else {
+            // 无歌词文件
+            this.lrcAvailable = false;
+            this.lrcObj.setLyric('');
+            let dom_lyric = document.getElementById('lyric');
+            if (dom_lyric) {
+              dom_lyric.innerHTML = '';
+            }
+          }
+        })
+        .catch((error) => {
+          if (error.response) {
+            // 请求已发出，但服务器响应的状态码不在 2xx 范围内
+            if (error.response.status !== 401) {
+              this.showErrNotif(error.response.data.error || `${error.response.status} ${error.response.statusText}`);
+            }
+          } else {
+            this.showErrNotif(error.message || error);
+          }
+        })
+    },
+
+    showErrNotif (message) {
+      this.$q.notify({
+        message,
+        color: 'negative',
+        icon: 'bug_report'
+      })
     }
   },
 
   mounted () {
     // 初始化音量
-    this.$store.commit('AudioPlayer/SET_VOLUME', this.player.volume)
+    this.$store.commit('AudioPlayer/SET_VOLUME', this.player.volume);
+    this.initLrcObj();
+    if (this.source) {
+      this.loadLrcFile();
+    }
   }
 }
 </script>
