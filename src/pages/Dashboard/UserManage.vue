@@ -105,7 +105,7 @@ export default {
         password: '',
         group: 'user'
       },
-      groups: ['user', 'gaust'],
+      groups: ['user', 'guest'],
       loadingAddNewUser: false,
 
       
