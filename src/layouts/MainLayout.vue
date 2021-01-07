@@ -138,6 +138,11 @@ export default {
           path: '/'
         },
         {
+          title: '我的收藏',
+          icon: 'favorite',
+          path: '/favs'
+        },
+        {
           title: '社团',
           icon: 'group',
           path: '/circles'
