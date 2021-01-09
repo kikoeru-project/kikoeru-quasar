@@ -63,8 +63,8 @@
             <q-icon name="chat" size="xs" /> <span class="text-grey"> ({{metadata.review_count}})</span>
           </div>
 		  
-		  <!-- DLsite链接 -->
-		  <div class="col-auto">
+          <!-- DLsite链接 -->
+          <div class="col-auto">
             <q-icon name="launch" size="xs" /><a class="text-blue" :href="`https://www.dlsite.com/home/work/=/product_id/RJ${String(metadata.id).padStart(6,'0')}.html`" target="_blank">DLsite</a>
           </div>
         </div>
@@ -89,7 +89,7 @@
       </div>
 
       <!-- 声优 -->
-      <div class="q-px-none q-pt-sm q-pb-none">
+      <div class="q-px-none q-pt-sm q-py-sm">
         <router-link
           v-for="(va, index) in metadata.vas"
           :to="`/va/${va.id}`"
@@ -99,7 +99,38 @@
             {{va.name}}
           </q-chip>
         </router-link>
-      </div>    
+      </div>
+
+      <q-btn-dropdown
+        dense
+        class="q-mt-sm shadow-4 q-mx-xs q-pl-sm"
+        color="cyan"
+        label="标记进度"
+      >
+        <q-list>
+          <q-item clickable v-close-popup @click="onItemClick">
+            <q-item-section>
+              <q-item-label>想听</q-item-label>
+            </q-item-section>
+          </q-item>
+
+          <q-item clickable v-close-popup @click="onItemClick">
+            <q-item-section>
+              <q-item-label>在听</q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-item clickable v-close-popup @click="onItemClick">
+            <q-item-section>
+              <q-item-label>听过</q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-item clickable v-close-popup @click="onItemClick">
+            <q-item-section>
+              <q-item-label>搁置</q-item-label>
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </q-btn-dropdown>    
     </div>
   </div>  
 </template>
@@ -163,6 +194,9 @@ export default {
   },
 
   methods: {
+    onItemClick () {
+      // TODO
+    },
     submitRating (payload) {
       this.$axios.put('/api/review', payload)
         .then((response) => {
