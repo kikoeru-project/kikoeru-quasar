@@ -83,7 +83,7 @@ const routes = [
         component: List
       },
       {
-        path: 'favs',
+        path: 'favourites',
         component: Favourites
       }
     ],

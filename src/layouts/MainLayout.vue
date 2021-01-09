@@ -140,7 +140,7 @@ export default {
         {
           title: '我的收藏',
           icon: 'favorite',
-          path: '/favs'
+          path: '/favourites'
         },
         {
           title: '社团',
@@ -226,7 +226,7 @@ export default {
 
     isNotInMain () {
       let path = this.$router.currentRoute.path
-      return (path && path !=='/') ? true : false;
+      return (path && path !=='/' && path !== '/favourites') ? true : false;
     },
   },
 }
