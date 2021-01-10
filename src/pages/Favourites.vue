@@ -25,9 +25,9 @@
     <div class="q-pt-md">
       <div class="q-px-sm q-py-md">
         <q-infinite-scroll @load="onLoad" :offset="250">
-          <div v-for="(item, index) in items" :key="index" class="caption row">
-            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Rerum repellendus sit voluptate voluptas eveniet porro. Rerum blanditiis perferendis totam, ea at omnis vel numquam exercitationem aut, natus minima, porro labore.</p>
-          </div>
+          <q-list bordered separator class="shadow-2">
+             <FavListItem v-for="(work) in works" :key="work.id" :workid="work.id"></FavListItem> 
+          </q-list>
           <template v-slot:loading>
             <div class="row justify-center q-my-md">
               <q-spinner-dots color="primary" size="40px" />
@@ -40,12 +40,19 @@
 </template>
 
 <script>
+import FavListItem from 'components/FavListItem'
+
 export default {
   name: 'Favourites',
+
+  components: {
+    FavListItem
+  },
 
   data() {
     return {
       filter: 'reviews',
+      works: [{id: 298301}, {id: 277473}, {id: 180713}],
       items: [ {}, {}, {}, {}, {}, {}, {} ],
       sortBy: {
           label: '按照评价时间排序',
