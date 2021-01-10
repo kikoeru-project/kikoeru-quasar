@@ -24,9 +24,9 @@
     </div>
     <div class="q-pt-md">
       <div class="q-px-sm q-py-md">
-        <q-infinite-scroll @load="onLoad" :offset="250">
-          <q-list bordered separator class="shadow-2">
-             <FavListItem v-for="(work) in works" :key="work.id" :workid="work.id"></FavListItem> 
+        <q-infinite-scroll @load="onLoad" :offset="500" :disable="stopLoad">
+          <q-list bordered separator class="shadow-2" v-if="works.length">
+             <FavListItem v-for="work in works" :key="work.id" :workid="work.id" :metadata="work"></FavListItem> 
           </q-list>
           <template v-slot:loading>
             <div class="row justify-center q-my-md">
@@ -52,8 +52,10 @@ export default {
   data() {
     return {
       filter: 'reviews',
-      works: [{id: 298301}, {id: 277473}, {id: 180713}],
-      items: [ {}, {}, {}, {}, {}, {}, {} ],
+      works: [],
+      // items: [ {}, {}, {}, {}, {}, {}, {} ],
+      stopLoad: false,
+      // pagination: {},
       sortBy: {
           label: '按照评价时间排序',
           order: 'updated_at',
@@ -67,7 +69,7 @@ export default {
         },
         {
           label: '按照评价排序',
-          order: 'rating',
+          order: 'userRating',
           sort: 'desc'
         },
         {
@@ -80,43 +82,91 @@ export default {
           order: 'release',
           sort: 'asc'
         },
-        {
-          label: '按照评论多到少的顺序',
-          order: 'review_count',
-          sort: 'desc'
-        },
-        {
-          label: '按照售出数量多到少的顺序',
-          order: 'dl_count',
-          sort: 'desc'
-        },
-        {
-          label: '按照全年龄新作优先的顺序',
-          order: 'nsfw',
-          sort: 'asc'
-        },
-        {
-          label: '按照18禁新作优先的顺序',
-          order: 'nsfw',
-          sort: 'desc'
-        }
+        // TODO: 后端增加排序列
+        // {
+        //   label: '按照评论多到少的顺序',
+        //   order: 'review_count',
+        //   sort: 'desc'
+        // },
+        // {
+        //   label: '按照售出数量多到少的顺序',
+        //   order: 'dl_count',
+        //   sort: 'desc'
+        // },
+        // {
+        //   label: '按照全年龄新作优先的顺序',
+        //   order: 'nsfw',
+        //   sort: 'asc'
+        // },
+        // {
+        //   label: '按照18禁新作优先的顺序',
+        //   order: 'nsfw',
+        //   sort: 'desc'
+        // }
       ]
     }
   },
+
+  watch: {
+    sortBy() {
+      // localStorage.sortOption = JSON.stringify(newSortOptionSetting);
+      this.reset();
+    }
+  },
+
   methods: {
     onLoad (index, done) {
-      setTimeout(() => {
-        if (this.items) {
-          this.items.push({}, {}, {}, {}, {}, {}, {})
-          if (this.items.length >= 49) {
-            console.log(this.items.length);
-            done(true)
+      this.requestWorksQueue()
+        .then(() => done())
+    },
+
+    reset () {
+      this.stopLoad = true
+      this.requestWorksQueue()
+        .then(() => {
+          this.stopLoad = false
+        })
+    },
+
+    // TODO 增加分页逻辑
+    requestWorksQueue () {
+      const params = {
+        order: this.sortBy.order,
+        sort: this.sortBy.sort,
+        // page: this.pagination.currentPage + 1 || 1
+        page: 1
+      }
+
+      return this.$axios.get('/api/favourites', { params })
+        .then((response) => {                  
+          const works = response.data.works
+          this.works = (params.page === 1) ? works.concat() : this.works.concat(works)
+          // this.pagination = response.data.pagination
+
+          // if (this.works.length >= this.pagination.totalCount) {
+            this.stopLoad = true
+          // }
+        })
+        .catch((error) => {
+          if (error.response) {
+            // 请求已发出，但服务器响应的状态码不在 2xx 范围内
+            if (error.response.status !== 401) {
+              this.showErrNotif(error.response.data.error || `${error.response.status} ${error.response.statusText}`)
+            }
           } else {
-            done()
+            this.showErrNotif(error.message || error)
           }
-        }
-      }, 2000)
-    }
+          this.stopLoad = true
+        })
+    },
+
+    showErrNotif (message) {
+      this.$q.notify({
+        message,
+        color: 'negative',
+        icon: 'bug_report'
+      })
+    },
   }
 }
 </script>

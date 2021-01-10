@@ -1,7 +1,7 @@
 <template>
   <q-item clickable class="row bg-white">
       <q-item-section class="col-auto" top> 
-        <router-link :to="`/work/${workid}`">
+        <router-link :to="`/work/${metadata.id}`">
           <q-img transition="fade" :src="coverUrl" style="height: 120px; width: 160px;" />
         </router-link>
       </q-item-section>
@@ -9,29 +9,31 @@
 
       <q-item-section class="q-gutter-y-xs column items-start" top v-on:click.self="toWork()">
         <q-item-label lines="2" class="text-body2">
-          <router-link :to="`/circle/49556`" class="col-auto text-black">
-            【5時間/銚子電鉄車内音/耳かき/砂浜/イルカウォッチング】蓄音レヱル 西瓜【CV.伊ヶ崎綾香】
+          <router-link :to="`/circle/${metadata.circle.id}`" class="col-auto text-black">
+            {{metadata.title}}
           </router-link>
         </q-item-label>
 
         <div class="row q-gutter-x-sm col-auto" >
-          <router-link :to="`/circle/49556`" class="col-auto text-grey">
-            RailRomanesque
+          <router-link :to="`/circle/${metadata.circle.id}`" class="col-auto text-grey">
+            {{metadata.circle.name}}
           </router-link>
 
           <span class="col-auto">/</span>
 
           <router-link
-            :to="`/va/1903985`"
+            v-for="(va, index) in metadata.vas"
+            :key=index
+            :to="`/va/${va.id}`"
             class="col-auto text-primary"
           >
-            伊ヶ崎綾香
+            {{ va.name }}
           </router-link>
         </div>
 
+        <!-- TODO 评分CRUD -->
         <q-rating
           v-model="rating"
-          v-on:click="test()"
           size="sm"
           color="blue"
           icon="star_border"
@@ -61,11 +63,15 @@ export default {
         type: Number,
         required: true
       },
+      metadata: {
+        type: Object,
+        required: true
+      }
   },
 
   data () {
     return {
-      rating: 4,
+      rating: 0,
       review: 'adas'
     }
   },
@@ -78,11 +84,11 @@ export default {
     },
   },
 
-  methods: {
-    test () {
-      console.log('rated')
-    },
-    
+  mounted() {
+    this.rating = this.metadata.userRating;
+  },
+
+  methods: {    
     toWork () {
       this.$router.push(`/work/${this.workid}`)
       // console.log('FIRED')
