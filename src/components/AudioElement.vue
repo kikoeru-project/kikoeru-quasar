@@ -154,9 +154,8 @@ export default {
     initLrcObj () {
         let dom_lyric = document.getElementById('lyric');
         this.lrcObj = new Lyric({
-          onPlay: function (line, text) {
-            //console.log(line, text);
-            dom_lyric.innerHTML = text;
+          onPlay: (line, text) => {
+            this.$store.commit('AudioPlayer/SET_CURRENT_LYRIC', text);
           },
         })
     },
