@@ -26,7 +26,7 @@
       <div class="q-px-sm q-py-md">
         <q-infinite-scroll @load="onLoad" :offset="500" :disable="stopLoad">
           <q-list bordered separator class="shadow-2" v-if="works.length">
-             <FavListItem v-for="work in works" :key="work.id" :workid="work.id" :metadata="work"></FavListItem> 
+             <FavListItem v-for="work in works" :key="work.id" :workid="work.id" :metadata="work" @reset="reset()"></FavListItem> 
           </q-list>
           <template v-slot:loading>
             <div class="row justify-center q-my-md">
@@ -53,9 +53,8 @@ export default {
     return {
       filter: 'reviews',
       works: [],
-      // items: [ {}, {}, {}, {}, {}, {}, {} ],
       stopLoad: false,
-      // pagination: {},
+      pagination: {},
       sortBy: {
           label: '按照评价时间排序',
           order: 'updated_at',
@@ -82,34 +81,43 @@ export default {
           order: 'release',
           sort: 'asc'
         },
-        // TODO: 后端增加排序列
-        // {
-        //   label: '按照评论多到少的顺序',
-        //   order: 'review_count',
-        //   sort: 'desc'
-        // },
-        // {
-        //   label: '按照售出数量多到少的顺序',
-        //   order: 'dl_count',
-        //   sort: 'desc'
-        // },
-        // {
-        //   label: '按照全年龄新作优先的顺序',
-        //   order: 'nsfw',
-        //   sort: 'asc'
-        // },
-        // {
-        //   label: '按照18禁新作优先的顺序',
-        //   order: 'nsfw',
-        //   sort: 'desc'
-        // }
+        {
+          label: '按照评论多到少的顺序',
+          order: 'review_count',
+          sort: 'desc'
+        },
+        {
+          label: '按照售出数量多到少的顺序',
+          order: 'dl_count',
+          sort: 'desc'
+        },
+        {
+          label: '按照全年龄新作优先的顺序',
+          order: 'nsfw',
+          sort: 'asc'
+        },
+        {
+          label: '按照18禁新作优先的顺序',
+          order: 'nsfw',
+          sort: 'desc'
+        }
       ]
     }
   },
 
+  mounted() {
+    if (localStorage.sortByFavourites) {
+      try {
+        this.sortBy = JSON.parse(localStorage.sortByFavourites);
+      } catch {
+        localStorage.removeItem('sortByFavourites');
+      }
+    }
+  },
+
   watch: {
-    sortBy() {
-      // localStorage.sortOption = JSON.stringify(newSortOptionSetting);
+    sortBy(newSortOptionSetting) {
+      localStorage.sortByFavourites = JSON.stringify(newSortOptionSetting);
       this.reset();
     }
   },
@@ -122,30 +130,29 @@ export default {
 
     reset () {
       this.stopLoad = true
+      this.pagination = {}
       this.requestWorksQueue()
         .then(() => {
           this.stopLoad = false
         })
     },
 
-    // TODO 增加分页逻辑
     requestWorksQueue () {
       const params = {
         order: this.sortBy.order,
         sort: this.sortBy.sort,
-        // page: this.pagination.currentPage + 1 || 1
-        page: 1
+        page: this.pagination.currentPage + 1 || 1
       }
 
       return this.$axios.get('/api/favourites', { params })
         .then((response) => {                  
           const works = response.data.works
           this.works = (params.page === 1) ? works.concat() : this.works.concat(works)
-          // this.pagination = response.data.pagination
+          this.pagination = response.data.pagination
 
-          // if (this.works.length >= this.pagination.totalCount) {
+          if (this.works.length >= this.pagination.totalCount) {
             this.stopLoad = true
-          // }
+          }
         })
         .catch((error) => {
           if (error.response) {

@@ -7,7 +7,7 @@
       </q-item-section>
 
 
-      <q-item-section class="q-gutter-y-xs column items-start" top v-on:click.self="toWork()">
+      <q-item-section class="q-gutter-y-xs column items-start" top v-on:click.self="showReviewDialog = true">
         <q-item-label lines="2" class="text-body2">
           <router-link :to="`/circle/${metadata.circle.id}`" class="col-auto text-black">
             {{metadata.title}}
@@ -20,6 +20,8 @@
           </router-link>
 
           <span class="col-auto">/</span>
+          <span class="col-auto text-grey"> {{metadata.release}}</span>
+          <span class="col-auto">/</span>
 
           <router-link
             v-for="(va, index) in metadata.vas"
@@ -31,32 +33,44 @@
           </router-link>
         </div>
 
-        <!-- TODO 评分CRUD -->
-        <q-rating
-          v-model="rating"
-          size="sm"
-          color="blue"
-          icon="star_border"
-          icon-selected="star"
-          icon-half="star_half"
-          class="col-auto"
-        />
+        <div class="row items-center q-gutter-x-xs">
+          <q-rating
+            v-model="rating"
+            size="sm"
+            color="blue"
+            icon="star_border"
+            icon-selected="star"
+            icon-half="star_half"
+            class="col-auto"
+          />
+          <span class="col-auto text-grey ">{{metadata.updated_at}}</span>
+        </div>
 
-        <q-item-label v-show="review">
-          <q-card class="my-card col-auto">
-            <q-card-section class="q-pa-sm">
+        <q-item-label class="q-pt-sm">
+          <q-card class="my-card col-auto" @click="showReviewDialog = true" v-show="metadata.review_text">
+            <q-card-section class="q-pa-sm ">
               <!-- <span class="text-grey-7">我的评价</span> -->
-              <span class="text-grey-8">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. </span>
+              <!-- <span class="text-grey-8">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. </span> -->
+              {{metadata.review_text}}
             </q-card-section>
           </q-card>
         </q-item-label>
       </q-item-section>
+
+      <WriteReview v-if="showReviewDialog" @closed="processReview" :workid="workid" :oldRating="rating" ></WriteReview>
+
   </q-item>
 </template>
 
 <script>
+import  WriteReview from './WriteReview'
+
 export default {
   name: 'FavListItem',
+
+  components: {
+    WriteReview
+  },
 
   props: {
       workid: {
@@ -72,7 +86,7 @@ export default {
   data () {
     return {
       rating: 0,
-      review: 'adas'
+      showReviewDialog: false,
     }
   },
 
@@ -88,10 +102,72 @@ export default {
     this.rating = this.metadata.userRating;
   },
 
+  watch: {
+    rating (newRating, oldRating) {
+      if (oldRating && newRating) {
+        const submitPayload = {
+          'user_name': this.$store.state.User.name, // 用户名不会被后端使用
+          'work_id': this.metadata.id,
+          'rating': newRating
+        };
+        this.submitRating(submitPayload);
+      }
+    },
+
+    metadata (newData) {
+      this.rating = this.metadata.userRating;
+    }
+  },
+
   methods: {    
     toWork () {
       this.$router.push(`/work/${this.workid}`)
       // console.log('FIRED')
+    },
+
+    processReview(modified) {
+      this.showReviewDialog = false;
+      if (modified) {
+        this.$emit('reset');
+      }
+    },
+
+    submitRating (payload) {
+      const params = {
+        starOnly: true
+      }
+      this.$axios.put('/api/review', payload, { params })
+        .then((response) => {
+          this.loading = false
+          this.showSuccNotif(response.data.message)
+        })
+        .then(()=> this.$emit('reset'))
+        .catch((error) => {
+          this.loading = false
+          if (error.response) {
+            // 请求已发出，但服务器响应的状态码不在 2xx 范围内
+            this.showErrNotif(error.response.data.error || `${error.response.status} ${error.response.statusText}`)
+          } else {
+            this.showErrNotif(error.message || error)
+          }
+        })
+    },
+
+    showSuccNotif (message) {
+      this.$q.notify({
+        message,
+        color: 'positive',
+        icon: 'done',
+        timeout: 500
+      })
+    },
+
+    showErrNotif (message) {
+      this.$q.notify({
+        message,
+        color: 'negative',
+        icon: 'bug_report'
+      })
     }
   }
 

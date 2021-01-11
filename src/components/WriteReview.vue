@@ -1,0 +1,182 @@
+<template>
+  <div>
+      <q-dialog v-model="showReviewDialog">
+        <q-card>
+          <q-card-section class="q-pb-sm">
+            <div class="text-body1">我的评论</div>
+          </q-card-section>
+
+          <q-card-section class="q-pt-none">
+            <q-rating
+              v-model="rating"
+              size="sm"
+              color="blue"
+              icon="star_border"
+              icon-selected="star"
+              icon-half="star_half"
+              class="col-auto"
+            />
+          </q-card-section>
+
+          <q-card-section class="q-pt-none" >
+            <div style="min-width: 300px">
+              <q-input
+                v-model="reviewText"
+                filled
+                type="textarea"
+              />
+            </div>
+          </q-card-section>
+          
+          <div class="row justify-between">
+            <q-card-actions  class="text-red">
+              <q-btn flat label="删除评论" v-close-popup @click="deleteConfirm = true" />
+            </q-card-actions>
+
+            <q-card-actions align="right" class="text-primary">
+              <q-btn flat label="确定" v-close-popup @click="submitReview()" />
+              <q-btn flat label="取消" v-close-popup @click="closeDialog()" />
+            </q-card-actions>
+          </div>
+        </q-card>
+      </q-dialog>
+
+      <q-dialog v-model="deleteConfirm" persistent transition-show="scale" transition-hide="scale">
+        <q-card class="bg-teal text-white" style="width: 300px">
+          <q-card-section>
+            <div class="text-h6">确定要删除评论吗</div>
+          </q-card-section>
+
+          <q-card-actions align="right" class="bg-white text-teal">
+              <q-btn flat label="确定" v-close-popup @click="deleteReview()" />
+              <q-btn flat label="取消" v-close-popup @click="closeDialog()"/>
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'WriteReview',
+
+  props: {
+    showDialog: {
+      type: Boolean,
+      default: false
+    },
+    workid: {
+      type: Number,
+      required: true
+    },
+    oldRating: {
+      type: Number,
+      default: 0
+    }
+  },
+
+  data () {
+    return {
+      showReviewDialog: true,
+      deleteConfirm: false,
+      rating: 0,
+      reviewText: '',
+      modified: false
+    }
+  },
+
+  computed: {
+
+  },
+
+  mounted() {
+    this.rating = this.oldRating;
+  },
+
+  watch: {
+
+  },
+
+  methods: {
+    closeDialog() {
+      if (this.modified) {
+        this.$emit('closed', true);
+      } else {
+        this.$emit('closed', false);
+      }
+    },
+
+    reviewPayload () {
+      const submitPayload = {
+        'user_name': this.$store.state.User.name, // 用户名不会被后端使用
+        'work_id': this.workid,
+        'rating': this.rating,
+        'review_text': this.reviewText
+      };
+      return submitPayload;
+    },
+
+    submitReview () {
+      const params = {
+        starOnly: false
+      }
+      const payload = this.reviewPayload();
+      this.$axios.put('/api/review', payload, {params})
+        .then((response) => {
+          this.modified =true
+          // 去除更改星标时的重复提示 （比较hacky）
+          if (this.rating === this.oldRating) {
+            this.showSuccNotif(response.data.message)
+          }
+        })
+        .then(()=> this.closeDialog())
+        .catch((error) => {
+          if (error.response) {
+            // 请求已发出，但服务器响应的状态码不在 2xx 范围内
+            this.showErrNotif(error.response.data.error || `${error.response.status} ${error.response.statusText}`)
+          } else {
+            this.showErrNotif(error.message || error)
+          }
+        })
+    },
+
+    deleteReview () {
+      const params = {
+        'work_id': this.workid
+      }
+      this.$axios.delete('/api/review', {params})
+        .then((response) => {
+          this.modified = true
+          this.showSuccNotif(response.data.message)
+        })
+        .then(() => this.closeDialog())
+        .catch((error) => {
+          if (error.response) {
+            // 请求已发出，但服务器响应的状态码不在 2xx 范围内
+            this.showErrNotif(error.response.data.error || `${error.response.status} ${error.response.statusText}`)
+          } else {
+            this.showErrNotif(error.message || error)
+          }
+        })
+    },
+
+    showSuccNotif (message) {
+      this.$q.notify({
+        message,
+        color: 'positive',
+        icon: 'done',
+        timeout: 500
+      })
+    },
+
+    showErrNotif (message) {
+      this.$q.notify({
+        message,
+        color: 'negative',
+        icon: 'bug_report'
+      })
+    }
+  }
+
+}
+</script>
