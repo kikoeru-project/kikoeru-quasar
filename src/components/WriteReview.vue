@@ -141,11 +141,8 @@ export default {
       this.$axios.put('/api/review', payload, {params})
         .then((response) => {
           this.modified =true
-          // 去除更改星标时的重复提示 （比较hacky）
           // TODO 修复callback graph
-          if (this.rating === this.oldRating) {
             this.showSuccNotif(response.data.message)
-          }
         })
         .then(()=> this.closeDialog())
         .catch((error) => {

@@ -112,6 +112,7 @@ export default {
       showReviewDialog: false,
       hideRating: false,
       progress: 'placeholder',
+      calledFromChild: false
     }
   },
 
@@ -137,15 +138,21 @@ export default {
   watch: {
     rating (newRating, oldRating) {
       if (oldRating && newRating) {
-        const submitPayload = {
-          'user_name': this.$store.state.User.name, // 用户名不会被后端使用
-          'work_id': this.metadata.id,
-          'rating': newRating
-        };
-        this.submitRating(submitPayload);
+        if (this.calledFromChild) {
+          // WriteReview => FavListItem.processReview => Favourites.reset() => metadata changed => this.rating changed
+          // reset
+          // TODO: 更好地修理Callback graph
+          this.calledFromChild = true; // reset
+        } else {
+          const submitPayload = {
+            'user_name': this.$store.state.User.name, // 用户名不会被后端使用
+            'work_id': this.metadata.id,
+            'rating': newRating
+          };
+          this.submitRating(submitPayload);
+        }
       }
     },
-    
 
     progress (newProgress, oldProgress) {
       if (oldProgress !== 'placeholder') {
@@ -175,6 +182,7 @@ export default {
     processReview(modified) {
       this.showReviewDialog = false;
       if (modified) {
+        this.calledFromChild = true;
         this.$emit('reset');
       }
     },
