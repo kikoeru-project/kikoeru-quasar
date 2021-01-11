@@ -101,7 +101,9 @@ export default {
   },
 
   mounted() {
-    this.rating = this.metadata.userRating;
+    if (!!this.metadata.userRating) {
+      this.rating = this.metadata.userRating;
+    }
   },
 
   watch: {
@@ -117,7 +119,9 @@ export default {
     },
 
     metadata (newData) {
-      this.rating = this.metadata.userRating;
+      if (this.metadata.userRating) {
+        this.rating = this.metadata.userRating;
+      }
       if (!this.rating) {
         this.hideRating = true;
       } else {
