@@ -130,6 +130,11 @@ export default {
   mounted() {
     if (!!this.metadata.userRating) {
       this.rating = this.metadata.userRating;
+    } else {
+      this.hideRating = true;
+    }
+    if (!!this.metadata.progress) {
+      this.progress = this.metadata.progress;
     }
   },
 
@@ -144,23 +149,24 @@ export default {
         this.submitRating(submitPayload);
       }
     },
+    
 
-    // progress (newProgress, oldProgress) {
-    //   if (oldProgress !== 'placeholder') {
-    //     const submitPayload = {
-    //       'user_name': this.$store.state.User.name, // 用户名不会被后端使用
-    //       'work_id': this.metadata.id,
-    //       'progress': newProgress
-    //     };
-    //     this.submitProgress(submitPayload);
-    //   }
-    // },
+    progress (newProgress, oldProgress) {
+      if (oldProgress !== 'placeholder') {
+        const submitPayload = {
+          'user_name': this.$store.state.User.name, // 用户名不会被后端使用
+          'work_id': this.metadata.id,
+          'progress': newProgress
+        };
+        this.submitProgress(submitPayload);
+      }
+    },
 
     metadata (newData) {
       if (this.metadata.userRating !== null) {
         this.rating = this.metadata.userRating;
       }
-      // this.progress = this.metadata.progress;
+      this.progress = this.metadata.progress;
       if (!this.rating) {
         this.hideRating = true;
       } else {

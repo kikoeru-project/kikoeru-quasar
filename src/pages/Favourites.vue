@@ -138,12 +138,12 @@ export default {
       localStorage.sortByFavourites = JSON.stringify(newSortOptionSetting);
       this.reset();
     },
-    // mode(newMode, oldMode) {
-    //   this.reset();
-    // },
-    // progressFilter(newFilter) {
-    //   this.reset();
-    // }
+    mode(newMode, oldMode) {
+      this.reset();
+    },
+    progressFilter(newFilter) {
+      this.reset();
+    }
   },
 
   methods: {
@@ -168,11 +168,9 @@ export default {
         page: this.pagination.currentPage + 1 || 1
       }
 
-      // if (this.mode === 'progress') {
-      //   params.filter = this.progressFilter;
-      // }
-
-      console.log('here')
+      if (this.mode === 'progress') {
+        params.filter = this.progressFilter;
+      }
 
       return this.$axios.get('/api/favourites', { params })
         .then((response) => {                  
