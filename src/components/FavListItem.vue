@@ -76,7 +76,7 @@
           </q-item-label>
       </q-item-section>
 
-      <WriteReview v-if="showReviewDialog" @closed="processReview" :workid="workid" :oldRating="rating" :oldProgress="progress"></WriteReview>
+      <WriteReview v-if="showReviewDialog" @closed="processReview" :workid="workid" :metadata="metadata"></WriteReview>
 
   </q-item>
 </template>

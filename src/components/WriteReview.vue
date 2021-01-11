@@ -85,13 +85,9 @@ export default {
       type: Number,
       required: true
     },
-    oldRating: {
-      type: Number,
-      default: 0
-    },
-    oldProgress: {
-      type: String,
-      default: ''
+    metadata: {
+      type: Object,
+      default: null
     }
   },
 
@@ -107,10 +103,13 @@ export default {
   },
 
   mounted() {
-    this.rating = this.oldRating;
-    if (!!this.oldProgress) {
-      this.progress = this.oldProgress
+    if (this.metadata.userRating !== null) {
+      this.rating = this.metadata.userRating;
     }
+    if (!!this.metadata.progress && this.metadata.progress !== 'placeholder') {
+      this.progress = this.metadata.progress;
+    }
+    this.reviewText = this.metadata.review_text;
   },
 
   methods: {
