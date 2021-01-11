@@ -74,10 +74,6 @@ export default {
   },
 
   props: {
-      workid: {
-        type: Number,
-        required: true
-      },
       metadata: {
         type: Object,
         required: true
@@ -119,7 +115,7 @@ export default {
     },
 
     metadata (newData) {
-      if (this.metadata.userRating) {
+      if (this.metadata.userRating !== null) {
         this.rating = this.metadata.userRating;
       }
       if (!this.rating) {
