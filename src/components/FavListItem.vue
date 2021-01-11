@@ -92,6 +92,10 @@ export default {
   },
 
   props: {
+      workid: {
+        type: Number,
+        required: true
+      },
       metadata: {
         type: Object,
         required: true
@@ -166,11 +170,6 @@ export default {
   },
 
   methods: {    
-    toWork () {
-      this.$router.push(`/work/${this.workid}`)
-      // console.log('FIRED')
-    },
-
     processReview(modified) {
       this.showReviewDialog = false;
       if (modified) {
