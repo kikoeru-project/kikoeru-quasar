@@ -108,7 +108,7 @@
         label="标记进度"
       >
         <q-list>
-          <q-item clickable v-close-popup @click="setProgress('marked')" class="q-pa-xs">
+          <q-item clickable @click="setProgress('marked')" class="q-pa-xs">
             <q-item-section avatar>
               <q-avatar icon="headset" v-show="progress === 'marked'" />
             </q-item-section>
@@ -117,7 +117,7 @@
             </q-item-section>
           </q-item>
 
-          <q-item clickable v-close-popup @click="setProgress('listening')" class="q-pa-xs">
+          <q-item clickable @click="setProgress('listening')" class="q-pa-xs">
             <q-item-section avatar>
               <q-avatar icon="headset" v-show="progress === 'listening'" />
             </q-item-section>
@@ -125,7 +125,7 @@
               <q-item-label>在听</q-item-label>
             </q-item-section>
           </q-item>
-          <q-item clickable v-close-popup @click="setProgress('listned')" class="q-pa-xs">
+          <q-item clickable @click="setProgress('listned')" class="q-pa-xs">
             <q-item-section avatar>
               <q-avatar icon="headset" v-show="progress === 'listned'" />
             </q-item-section>
@@ -133,7 +133,7 @@
               <q-item-label>听过</q-item-label>
             </q-item-section>
           </q-item>
-          <q-item clickable v-close-popup @click="setProgress('postponed')" class="q-pa-xs">
+          <q-item clickable @click="setProgress('postponed')" class="q-pa-xs">
             <q-item-section avatar>
               <q-avatar icon="headset" v-show="progress === 'postponed'" />
             </q-item-section>

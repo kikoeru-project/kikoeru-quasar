@@ -35,6 +35,7 @@
 
         <div class="row items-center q-gutter-x-xs">
           <q-rating
+            v-if="!hideRating"
             v-model="rating"
             size="sm"
             color="blue"
@@ -87,6 +88,7 @@ export default {
     return {
       rating: 0,
       showReviewDialog: false,
+      hideRating: false
     }
   },
 
@@ -116,6 +118,11 @@ export default {
 
     metadata (newData) {
       this.rating = this.metadata.userRating;
+      if (!this.rating) {
+        this.hideRating = true;
+      } else {
+        this.hideRating = false;
+      }
     }
   },
 
@@ -138,12 +145,10 @@ export default {
       }
       this.$axios.put('/api/review', payload, { params })
         .then((response) => {
-          this.loading = false
           this.showSuccNotif(response.data.message)
         })
         .then(()=> this.$emit('reset'))
         .catch((error) => {
-          this.loading = false
           if (error.response) {
             // 请求已发出，但服务器响应的状态码不在 2xx 范围内
             this.showErrNotif(error.response.data.error || `${error.response.status} ${error.response.statusText}`)

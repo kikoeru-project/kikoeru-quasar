@@ -56,13 +56,13 @@ export default {
       stopLoad: false,
       pagination: {},
       sortBy: {
-          label: '按照评价时间排序',
+          label: '按照标记时间排序',
           order: 'updated_at',
           sort: 'desc'
         },
       sortOptions: [
         {
-          label: '按照评价时间排序',
+          label: '按照标记时间排序',
           order: 'updated_at',
           sort: 'desc'
         },
