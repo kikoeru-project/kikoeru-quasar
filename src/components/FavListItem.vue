@@ -47,15 +47,33 @@
           <span class="col-auto text-grey ">{{metadata.updated_at}}</span>
         </div>
 
-        <q-item-label class="q-pt-sm">
-          <q-card class="my-card col-auto" @click="showReviewDialog = true" v-show="metadata.review_text">
-            <q-card-section class="q-pa-sm ">
-              <!-- <span class="text-grey-7">我的评价</span> -->
-              <!-- <span class="text-grey-8">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. </span> -->
-              {{metadata.review_text}}
+        <q-item-label class="q-pt-sm" v-if="mode === 'review'">
+          <q-card class="my-card col-auto" @click="showReviewDialog = true" v-show="metadata.review_text" >
+            <q-card-section class="q-pa-sm">
+            {{metadata.review_text}}
             </q-card-section>
           </q-card>
         </q-item-label>
+
+        <q-item-label class="q-pt-xs" v-if="mode === 'progress'">
+          <q-btn-toggle
+            v-if="mode === 'progress'"
+            v-model="progress"
+            dense
+            no-caps
+            rounded
+            toggle-color="primary"
+            color="white"
+            text-color="black"
+            class="q-pa-sm"
+            :options="[
+              {label: '想听', value: 'marked'},
+              {label: '在听', value: 'listening'},
+              {label: '听过', value: 'listened'},
+              {label: '搁置', value: 'postponed'}
+            ]"
+          />
+          </q-item-label>
       </q-item-section>
 
       <WriteReview v-if="showReviewDialog" @closed="processReview" :workid="workid" :oldRating="rating" ></WriteReview>
@@ -77,6 +95,14 @@ export default {
       metadata: {
         type: Object,
         required: true
+      },
+      mode: {
+        type: String,
+        default: 'review'
+      },
+      progressFilter: {
+        type: String,
+        default: 'marked'
       }
   },
 
@@ -84,7 +110,8 @@ export default {
     return {
       rating: 0,
       showReviewDialog: false,
-      hideRating: false
+      hideRating: false,
+      progress: 'marked',
     }
   },
 
@@ -114,10 +141,22 @@ export default {
       }
     },
 
+    // progress (newProgress, oldProgress) {
+    //   if (oldProgress !== 'placeholder') {
+    //     const submitPayload = {
+    //       'user_name': this.$store.state.User.name, // 用户名不会被后端使用
+    //       'work_id': this.metadata.id,
+    //       'progress': newProgress
+    //     };
+    //     this.submitProgress(submitPayload);
+    //   }
+    // },
+
     metadata (newData) {
       if (this.metadata.userRating !== null) {
         this.rating = this.metadata.userRating;
       }
+      // this.progress = this.metadata.progress;
       if (!this.rating) {
         this.hideRating = true;
       } else {
@@ -148,6 +187,25 @@ export default {
           this.showSuccNotif(response.data.message)
         })
         .then(()=> this.$emit('reset'))
+        .catch((error) => {
+          if (error.response) {
+            // 请求已发出，但服务器响应的状态码不在 2xx 范围内
+            this.showErrNotif(error.response.data.error || `${error.response.status} ${error.response.statusText}`)
+          } else {
+            this.showErrNotif(error.message || error)
+          }
+        })
+    },
+
+    submitProgress (payload) {
+      const params = {
+        starOnly: false,
+        progressOnly: true
+      }
+      this.$axios.put('/api/review', payload, {params})
+        .then((response) => {
+          this.showSuccNotif(response.data.message)
+        })
         .catch((error) => {
           if (error.response) {
             // 请求已发出，但服务器响应的状态码不在 2xx 范围内
