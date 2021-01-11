@@ -108,23 +108,35 @@
         label="标记进度"
       >
         <q-list>
-          <q-item clickable v-close-popup @click="onItemClick">
+          <q-item clickable v-close-popup @click="setProgress('marked')" class="q-pa-xs">
+            <q-item-section avatar>
+              <q-avatar icon="headset" v-show="progress === 'marked'" />
+            </q-item-section>
             <q-item-section>
               <q-item-label>想听</q-item-label>
             </q-item-section>
           </q-item>
 
-          <q-item clickable v-close-popup @click="onItemClick">
+          <q-item clickable v-close-popup @click="setProgress('listening')" class="q-pa-xs">
+            <q-item-section avatar>
+              <q-avatar icon="headset" v-show="progress === 'listening'" />
+            </q-item-section>
             <q-item-section>
               <q-item-label>在听</q-item-label>
             </q-item-section>
           </q-item>
-          <q-item clickable v-close-popup @click="onItemClick">
+          <q-item clickable v-close-popup @click="setProgress('listned')" class="q-pa-xs">
+            <q-item-section avatar>
+              <q-avatar icon="headset" v-show="progress === 'listned'" />
+            </q-item-section>
             <q-item-section>
               <q-item-label>听过</q-item-label>
             </q-item-section>
           </q-item>
-          <q-item clickable v-close-popup @click="onItemClick">
+          <q-item clickable v-close-popup @click="setProgress('postponed')" class="q-pa-xs">
+            <q-item-section avatar>
+              <q-avatar icon="headset" v-show="progress === 'postponed'" />
+            </q-item-section>
             <q-item-section>
               <q-item-label>搁置</q-item-label>
             </q-item-section>
@@ -156,6 +168,7 @@ export default {
     return {
       rating: 0,
       userMarked: false,
+      progress: 'placeholder'
     }
   },
 
@@ -164,7 +177,6 @@ export default {
       function compare(a, b) {
         return (a.review_point > b.review_point) ? -1 : 1;
       }
-
       return this.metadata.rate_count_detail.slice().sort(compare);
     }
   },
@@ -178,6 +190,7 @@ export default {
         this.userMarked = false;
         this.rating = this.metadata.rate_average_2dp || 0;
       }
+      this.progress = this.metadata.progress;
     },
 
     rating (newRating, oldRating) {
@@ -190,21 +203,50 @@ export default {
         this.userMarked = true;
         this.submitRating(submitPayload);
       }
+    },
+
+    progress (newProgress, oldProgress) {
+      if (oldProgress !== 'placeholder') {
+        const submitPayload = {
+          'user_name': this.$store.state.User.name, // 用户名不会被后端使用
+          'work_id': this.metadata.id,
+          'progress': newProgress
+        };
+        this.submitProgress(submitPayload);
+      }
     }
   },
 
   methods: {
-    onItemClick () {
-      // TODO
+    setProgress (newProgress) {
+      this.progress = newProgress;
     },
-    submitRating (payload) {
-      this.$axios.put('/api/review', payload)
+
+    submitProgress (payload) {
+      const params = {
+        starOnly: false,
+        progressOnly: true
+      }
+      this.$axios.put('/api/review', payload, {params})
         .then((response) => {
-          this.loading = false
           this.showSuccNotif(response.data.message)
         })
         .catch((error) => {
-          this.loading = false
+          if (error.response) {
+            // 请求已发出，但服务器响应的状态码不在 2xx 范围内
+            this.showErrNotif(error.response.data.error || `${error.response.status} ${error.response.statusText}`)
+          } else {
+            this.showErrNotif(error.message || error)
+          }
+        })
+    },
+
+    submitRating (payload) {
+      this.$axios.put('/api/review', payload)
+        .then((response) => {
+          this.showSuccNotif(response.data.message)
+        })
+        .catch((error) => {
           if (error.response) {
             // 请求已发出，但服务器响应的状态码不在 2xx 范围内
             this.showErrNotif(error.response.data.error || `${error.response.status} ${error.response.statusText}`)
