@@ -142,19 +142,25 @@
             </q-item-section>
           </q-item>
         </q-list>
-      </q-btn-dropdown>    
+      </q-btn-dropdown>
+
+      <q-btn dense @click="showReviewDialog = true" color="cyan q-mt-sm shadow-4 q-mx-xs q-px-sm" label="写评论" />
+
+      <WriteReview v-if="showReviewDialog" @closed="processReview" :workid="metadata.id" :metadata="metadata"></WriteReview>
     </div>
   </div>  
 </template>
 
 <script>
 import CoverSFW from 'components/CoverSFW'
+import  WriteReview from './WriteReview'
 
 export default {
   name: 'WorkDetails',
 
   components: {
-    CoverSFW
+    CoverSFW,
+    WriteReview
   },
 
   props: {
@@ -168,7 +174,8 @@ export default {
     return {
       rating: 0,
       userMarked: false,
-      progress: 'placeholder'
+      progress: 'placeholder',
+      showReviewDialog: false
     }
   },
 
@@ -254,6 +261,10 @@ export default {
             this.showErrNotif(error.message || error)
           }
         })
+    },
+
+    processReview () {
+      this.showReviewDialog = false;
     },
 
     showSuccNotif (message) {

@@ -77,10 +77,6 @@ export default {
   name: 'WriteReview',
 
   props: {
-    showDialog: {
-      type: Boolean,
-      default: false
-    },
     workid: {
       type: Number,
       required: true
