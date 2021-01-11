@@ -30,7 +30,7 @@
           
           <div class="row justify-between">
             <q-card-actions  class="text-red">
-              <q-btn flat label="删除评论" v-close-popup @click="deleteConfirm = true" />
+              <q-btn flat label="删除标记" v-close-popup @click="deleteConfirm = true" />
             </q-card-actions>
 
             <q-card-actions align="right" class="text-primary">
@@ -44,7 +44,7 @@
       <q-dialog v-model="deleteConfirm" persistent transition-show="scale" transition-hide="scale">
         <q-card class="bg-teal text-white" style="width: 300px">
           <q-card-section>
-            <div class="text-h6">确定要删除评论吗</div>
+            <div class="text-h6">确定要删除标记吗</div>
           </q-card-section>
 
           <q-card-actions align="right" class="bg-white text-teal">
