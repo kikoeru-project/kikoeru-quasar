@@ -16,6 +16,22 @@
               icon-half="star_half"
               class="col-auto"
             />
+            <q-btn-toggle
+              v-model="progress"
+              no-caps
+              class="my-custom-toggle q-mx-md"
+              rounded
+              unelevated
+              toggle-color="primary"
+              color="white"
+              text-color="primary"
+              :options="[
+                {label: '想听', value: 'marked'},
+                {label: '在听', value: 'listening'},
+                {label: '听过', value: 'listened'},
+                {label: '搁置', value: 'postponed'}
+              ]"
+            />
           </q-card-section>
 
           <q-card-section class="q-pt-none" >
@@ -81,7 +97,8 @@ export default {
       deleteConfirm: false,
       rating: 0,
       reviewText: '',
-      modified: false
+      modified: false,
+      progress: '',
     }
   },
 
@@ -111,7 +128,8 @@ export default {
         'user_name': this.$store.state.User.name, // 用户名不会被后端使用
         'work_id': this.workid,
         'rating': this.rating,
-        'review_text': this.reviewText
+        'review_text': this.reviewText,
+        'progress': this.progress
       };
       return submitPayload;
     },
@@ -180,3 +198,8 @@ export default {
 
 }
 </script>
+
+<style lang="sass" scoped>
+.my-custom-toggle
+  border: 1px solid #027be3
+</style>
