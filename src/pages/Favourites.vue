@@ -43,7 +43,7 @@
       <div class="q-px-sm q-py-md">
         <q-infinite-scroll @load="onLoad" :offset="500" :disable="stopLoad">
           <q-list bordered separator class="shadow-2" v-if="works.length">
-             <FavListItem v-for="work in works" :key="work.id" :workid="work.id" :metadata="work" @reset="reset()" :mode="mode" :filter="progressFilter"></FavListItem> 
+             <FavListItem v-for="work in works" :key="work.id" :workid="work.id" :metadata="work" @reset="reset()" :mode="mode"></FavListItem> 
           </q-list>
           <template v-slot:loading>
             <div class="row justify-center q-my-md">

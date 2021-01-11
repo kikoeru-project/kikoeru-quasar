@@ -103,10 +103,6 @@ export default {
       mode: {
         type: String,
         default: 'review'
-      },
-      progressFilter: {
-        type: String,
-        default: 'marked'
       }
   },
 
@@ -115,7 +111,7 @@ export default {
       rating: 0,
       showReviewDialog: false,
       hideRating: false,
-      progress: 'marked',
+      progress: 'placeholder',
     }
   },
 
@@ -175,7 +171,7 @@ export default {
     }
   },
 
-  methods: {    
+  methods: {
     processReview(modified) {
       this.showReviewDialog = false;
       if (modified) {
@@ -211,6 +207,7 @@ export default {
         .then((response) => {
           this.showSuccNotif(response.data.message)
         })
+        .then(()=> this.$emit('reset'))
         .catch((error) => {
           if (error.response) {
             // 请求已发出，但服务器响应的状态码不在 2xx 范围内
