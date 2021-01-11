@@ -127,7 +127,7 @@
           </q-item>
           <q-item clickable @click="setProgress('listened')" class="q-pa-xs">
             <q-item-section avatar>
-              <q-avatar icon="headset" v-show="progress === 'listned'" />
+              <q-avatar icon="headset" v-show="progress === 'listened'" />
             </q-item-section>
             <q-item-section>
               <q-item-label>听过</q-item-label>
