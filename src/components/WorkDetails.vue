@@ -239,10 +239,10 @@ export default {
         'work_id': this.metadata.id,
         'rating': newRating
       };
-      this.submitRating(newRating);
+      this.submitRating(submitPayload);
     },
 
-    submitRating (newRating) {
+    submitRating (payload) {
       this.$axios.put('/api/review', payload)
         .then((response) => {
           this.showSuccNotif(response.data.message)
