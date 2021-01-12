@@ -99,12 +99,10 @@ export default {
   },
 
   mounted() {
-    if (this.metadata.userRating !== null) {
+    if (this.metadata.userRating) {
       this.rating = this.metadata.userRating;
     }
-    if (!!this.metadata.progress && this.metadata.progress !== 'placeholder') {
       this.progress = this.metadata.progress;
-    }
     this.reviewText = this.metadata.review_text;
   },
 

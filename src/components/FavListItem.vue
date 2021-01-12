@@ -37,6 +37,7 @@
           <q-rating
             v-if="!hideRating"
             v-model="rating"
+            @input="setRating"
             size="sm"
             color="blue"
             icon="star_border"
@@ -59,6 +60,7 @@
           <q-btn-toggle
             v-if="mode === 'progress'"
             v-model="progress"
+            @input="setProgress"
             dense
             no-caps
             rounded
@@ -111,8 +113,7 @@ export default {
       rating: 0,
       showReviewDialog: false,
       hideRating: false,
-      progress: 'placeholder',
-      calledFromChild: false
+      progress: ''
     }
   },
 
@@ -125,65 +126,50 @@ export default {
   },
 
   mounted() {
-    if (!!this.metadata.userRating) {
-      this.rating = this.metadata.userRating;
-    } else {
-      this.hideRating = true;
-    }
-    if (!!this.metadata.progress) {
-      this.progress = this.metadata.progress;
-    }
+    // 可以用mounted因为初始化时metadata不为空
+    this.setMetadata();
   },
 
   watch: {
-    rating (newRating, oldRating) {
-      if (oldRating && newRating) {
-        if (this.calledFromChild) {
-          // WriteReview => FavListItem.processReview => Favourites.reset() => metadata changed => this.rating changed
-          // reset
-          // TODO: 更好地修理Callback graph
-          this.calledFromChild = true; // reset
-        } else {
-          const submitPayload = {
-            'user_name': this.$store.state.User.name, // 用户名不会被后端使用
-            'work_id': this.metadata.id,
-            'rating': newRating
-          };
-          this.submitRating(submitPayload);
-        }
-      }
-    },
-
-    progress (newProgress, oldProgress) {
-      if (oldProgress !== 'placeholder') {
-        const submitPayload = {
-          'user_name': this.$store.state.User.name, // 用户名不会被后端使用
-          'work_id': this.metadata.id,
-          'progress': newProgress
-        };
-        this.submitProgress(submitPayload);
-      }
-    },
-
+    // 需要watch metadata 当父component刷新metadata时更新
     metadata (newData) {
-      if (this.metadata.userRating !== null) {
+      this.setMetadata();
+    }
+  },
+
+  methods: {
+    setMetadata () {
+      if (this.metadata.userRating) {
         this.rating = this.metadata.userRating;
+      } else {
+        this.hideRating = true;
       }
-      this.progress = this.metadata.progress;
       if (!this.rating) {
         this.hideRating = true;
       } else {
         this.hideRating = false;
       }
-    }
-  },
 
-  methods: {
-    processReview(modified) {
+      this.progress = this.metadata.progress;
+    },
+
+    processReview (modified) {
       this.showReviewDialog = false;
       if (modified) {
         this.calledFromChild = true;
         this.$emit('reset');
+      }
+    },
+
+    setRating (newRating) {
+      // 取消标星可能是操作失误，所以不响应。应使用删除标记来删除打星
+      if (newRating) {
+        const submitPayload = {
+          'user_name': this.$store.state.User.name, // 用户名不会被后端使用
+          'work_id': this.metadata.id,
+          'rating': newRating
+        };
+        this.submitRating(submitPayload);
       }
     },
 
@@ -204,6 +190,15 @@ export default {
             this.showErrNotif(error.message || error)
           }
         })
+    },
+
+    setProgress (newProgress) {
+      const submitPayload = {
+        'user_name': this.$store.state.User.name, // 用户名不会被后端使用
+        'work_id': this.metadata.id,
+        'progress': newProgress
+      };
+      this.submitProgress(submitPayload);
     },
 
     submitProgress (payload) {

@@ -26,6 +26,7 @@
           <div class="col-auto">
             <q-rating
               v-model="rating"
+              @input="setRating"
               name="rating"
               size="sm"
               :color="userMarked ? 'blue' : 'amber'"
@@ -189,6 +190,7 @@ export default {
   },
 
   watch: {
+    // 需要用watch因为父component pages/work.vue是先用空值初始化的
     metadata () {
       if (this.metadata.userRating) {
         this.userMarked = true;
@@ -198,18 +200,6 @@ export default {
         this.rating = this.metadata.rate_average_2dp || 0;
       }
       this.progress = this.metadata.progress;
-    },
-
-    rating (newRating, oldRating) {
-      if (oldRating) {
-        const submitPayload = {
-          'user_name': this.$store.state.User.name, // 用户名不会被后端使用
-          'work_id': this.metadata.id,
-          'rating': newRating
-        };
-        this.userMarked = true;
-        this.submitRating(submitPayload);
-      }
     },
   },
 
@@ -243,7 +233,16 @@ export default {
         })
     },
 
-    submitRating (payload) {
+    setRating (newRating) {
+      const submitPayload = {
+        'user_name': this.$store.state.User.name, // 用户名不会被后端使用
+        'work_id': this.metadata.id,
+        'rating': newRating
+      };
+      this.submitRating(newRating);
+    },
+
+    submitRating (newRating) {
       this.$axios.put('/api/review', payload)
         .then((response) => {
           this.showSuccNotif(response.data.message)
