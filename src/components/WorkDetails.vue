@@ -174,7 +174,7 @@ export default {
     return {
       rating: 0,
       userMarked: false,
-      progress: 'placeholder',
+      progress: '',
       showReviewDialog: false
     }
   },
@@ -211,22 +211,17 @@ export default {
         this.submitRating(submitPayload);
       }
     },
-
-    progress (newProgress, oldProgress) {
-      if (oldProgress !== 'placeholder') {
-        const submitPayload = {
-          'user_name': this.$store.state.User.name, // 用户名不会被后端使用
-          'work_id': this.metadata.id,
-          'progress': newProgress
-        };
-        this.submitProgress(submitPayload);
-      }
-    }
   },
 
   methods: {
     setProgress (newProgress) {
       this.progress = newProgress;
+      const submitPayload = {
+        'user_name': this.$store.state.User.name, // 用户名不会被后端使用
+        'work_id': this.metadata.id,
+        'progress': newProgress
+      };
+      this.submitProgress(submitPayload);
     },
 
     submitProgress (payload) {
