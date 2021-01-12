@@ -41,7 +41,7 @@
 
     <div class="q-pt-md">
       <div class="q-px-sm q-py-md">
-        <q-infinite-scroll @load="onLoad" :offset="500" :disable="stopLoad">
+        <q-infinite-scroll @load="onLoad" :offset="500" :disable="stopLoad" v-if="mode !=='folder'">
           <q-list bordered separator class="shadow-2" v-if="works.length">
              <FavListItem v-for="work in works" :key="work.id" :workid="work.id" :metadata="work" @reset="reset()" :mode="mode"></FavListItem> 
           </q-list>
@@ -51,6 +51,8 @@
             </div>
           </template>
         </q-infinite-scroll>
+
+        <div v-else class="row justify-center text-grey">尚未实现，敬请期待</div>
       </div>
     </div>
   </q-page>
