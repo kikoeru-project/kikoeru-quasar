@@ -1,5 +1,5 @@
 <template>
-  <q-item class="bg-white" style="padding: 5px;">
+  <q-item clickable :to="`/work/${metadata.id}`" class="bg-white" style="padding: 5px;">
     <q-item-section avatar style="padding: 0px 5px 0px 0px;">
       <router-link :to="`/work/${metadata.id}`">
         <q-img transition="fade" :src="samCoverUrl" style="height: 60px; width: 60px;" />
@@ -49,16 +49,16 @@
 </template>
 
 <script>
-import WorkDetails from 'components/WorkDetails'
-import CoverSFW from 'components/CoverSFW'
+// import WorkDetails from 'components/WorkDetails'
+// import CoverSFW from 'components/CoverSFW'
 
 export default {
   name: 'WorkListItem',
 
-  components: {
-    CoverSFW,
-    WorkDetails
-  },
+  // components: {
+    // CoverSFW,
+    // WorkDetails
+  // },
 
   props: {
     workid: {
@@ -95,7 +95,7 @@ export default {
   },
 
   watch: {
-    workid (newWorkid, oldWorkid) {
+    workid () {
       this.requestMetadata()
     }
   },

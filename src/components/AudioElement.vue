@@ -14,6 +14,7 @@
 
 <script>
 import Lyric from 'lrc-file-parser'
+import { mapState, mapGetters } from 'vuex'
 
 export default {
   name: 'AudioElement',
@@ -33,32 +34,21 @@ export default {
     source () {
       // 从 LocalStorage 中读取 token
       const token = this.$q.localStorage.getItem('jwt-token') || ''
-      return this.queue.length ? `/api/stream/${this.queue[this.queueIndex].hash}?token=${token}` : ""
+      return this.currentPlayingFile.hash ? `/api/stream/${this.currentPlayingFile.hash}?token=${token}` : ""
     },
 
-    playing () {
-      return this.$store.state.AudioPlayer.playing
-    },
+    ...mapState('AudioPlayer', [
+      'playing',
+      'queue',
+      'queueIndex',
+      'playMode',
+      'muted',
+      'volume'
+    ]),
 
-    queue () {
-      return this.$store.state.AudioPlayer.queue
-    },
-
-    queueIndex () {
-      return this.$store.state.AudioPlayer.queueIndex
-    },
-
-    playMode () {
-      return this.$store.state.AudioPlayer.playMode
-    },
-
-    muted () {
-      return this.$store.state.AudioPlayer.muted
-    },
-
-    volume () {
-      return this.$store.state.AudioPlayer.volume
-    }
+    ...mapGetters('AudioPlayer', [
+      'currentPlayingFile'
+    ])
   },
 
   watch: {
@@ -126,7 +116,7 @@ export default {
           this.player.currentTime = 0
           this.$store.commit('AudioPlayer/PLAY')
           break
-        case "shuffle":
+        case "shuffle": {
           // 随机播放
           const index = Math.floor(Math.random()*this.queue.length)
           this.$store.commit('AudioPlayer/SET_TRACK', index)
@@ -134,6 +124,7 @@ export default {
             this.player.currentTime = 0
           }
           break
+        }
         default:
           // 顺序播放
           if (this.queueIndex === this.queue.length - 1) {
@@ -162,11 +153,9 @@ export default {
     },
 
     initLrcObj () {
-        let dom_lyric = document.getElementById('lyric');
         this.lrcObj = new Lyric({
-          onPlay: function (line, text) {
-            //console.log(line, text);
-            dom_lyric.innerHTML = text;
+          onPlay: (line, text) => {
+            this.$store.commit('AudioPlayer/SET_CURRENT_LYRIC', text);
           },
         })
     },

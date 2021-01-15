@@ -79,11 +79,11 @@
         </div>
         
         <q-list v-if="listMode" bordered separator class="shadow-2">
-          <WorkListItem v-for="work in works" :key="work.id" :workid="work.id" :showLabel="showLabel && windowWidth > 700" class="fit" />
+          <WorkListItem v-for="work in works" :key="work.id" :workid="work.id" :showLabel="showLabel && windowWidth > 700" />
         </q-list>
 
         <div v-else class="row q-col-gutter-x-md q-col-gutter-y-lg">
-          <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3" :class="detailStyle()" v-for="work in works" :key="work.id">
+          <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3" :class="{'work-card': detailMode}" v-for="work in works" :key="work.id">
             <WorkCard :workid="work.id" class="fit"/> 
           </div> 
         </div>
@@ -129,6 +129,7 @@ export default {
       page: 1,
       pagination: {},
       windowWidth: window.innerWidth,
+      seed: 7, // random sort
       sortOption: {
         label: '按照发售日期新到老的顺序',
         order: 'release',
@@ -138,6 +139,11 @@ export default {
         {
           label: '按照发售日期新到老的顺序',
           order: 'release',
+          sort: 'desc'
+        },
+        {
+          label: '按照我的评价排序',
+          order: 'rating',
           sort: 'desc'
         },
         {
@@ -186,8 +192,8 @@ export default {
           sort: 'asc'
         },
         {
-          label: '按照18禁新作优先的顺序',
-          order: 'nsfw',
+          label: '随机排序',
+          order: 'random',
           sort: 'desc'
         }
       ]
@@ -195,7 +201,8 @@ export default {
   },
 
   created () {
-    this.refreshPageTitle()
+    this.refreshPageTitle();
+    this.seed = Math.floor(Math.random() * 100);
   },
 
   mounted() {
@@ -236,6 +243,7 @@ export default {
 
     sortOption (newSortOptionSetting) {
       localStorage.sortOption = JSON.stringify(newSortOptionSetting);
+      this.seed = Math.floor(Math.random() * 100);
       this.reset();
     },
 
@@ -262,7 +270,8 @@ export default {
       const params = {
         order: this.sortOption.order,
         sort: this.sortOption.sort,
-        page: this.pagination.currentPage + 1 || 1
+        page: this.pagination.currentPage + 1 || 1,
+        seed: this.seed
       }
 
       return this.$axios.get(this.url, { params })
@@ -345,14 +354,6 @@ export default {
         icon: 'bug_report'
       })
     },
-    
-    detailStyle() {
-      if (this.detailMode) {
-        return 'work-card';
-      } else {
-        return '';
-      }
-    }
   }
 }
 </script>

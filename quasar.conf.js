@@ -74,6 +74,12 @@ module.exports = function (ctx) {
 
       // https://quasar.dev/quasar-cli/cli-documentation/handling-webpack
       extendWebpack (cfg) {
+        cfg.module.rules.push({
+          enforce: 'pre',
+          test: /\.(js|vue)$/,
+          loader: 'eslint-loader',
+          exclude: /[\\/]node_modules[\\/]/
+        })
       }
     },
 
@@ -85,7 +91,11 @@ module.exports = function (ctx) {
       proxy: {
         // https://webpack.js.org/configuration/dev-server/#devserverproxy
         // proxy all requests starting with /api to http://localhost:8888
-        '/api': 'http://localhost:8888'
+        '/api': 'http://localhost:8888',
+        '/socket.io': {
+          target: 'http://localhost:8888',
+          ws: true
+        }
       }
     },
 

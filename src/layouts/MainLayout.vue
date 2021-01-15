@@ -4,6 +4,8 @@
       <q-toolbar>
         <q-btn flat dense round @click="drawerOpen = !drawerOpen" icon="menu" aria-label="Menu" />
 
+        <q-btn flat size="md" icon="arrow_back_ios" @click="back()" v-if="isNotInMain()"/>
+
         <q-toolbar-title class="gt-xs">
           <router-link :to="'/'" class="text-white">
             Kikoeru
@@ -63,6 +65,26 @@
             v-ripple
             exact
             active-class="text-deep-purple text-weight-medium"
+            @click="randomPlay"
+          >
+            <q-item-section avatar>
+              <q-icon name="shuffle" />
+            </q-item-section>
+
+            <q-item-section>
+              <q-item-label class="text-subtitle1">
+                随心听
+              </q-item-label>
+            </q-item-section>
+          </q-item>
+        </q-list>
+
+        <q-list>
+          <q-item 
+            clickable
+            v-ripple
+            exact
+            active-class="text-deep-purple text-weight-medium"
             @click="confirm = true"
           >
             <q-item-section avatar>
@@ -97,15 +119,13 @@
       <!-- <q-page padding> -->
         <router-view class="page-content" />
       <!-- </q-page> -->
-      
+        <q-page-scroller position="bottom-right" :scroll-offset="150" :offset="[18, 18]">
+          <q-btn fab icon="keyboard_arrow_up" color="accent" />
+        </q-page-scroller>
     </q-page-container>
 
-    <q-footer bordered elevated class="q-pa-none">
-      <q-card>
-        <div id="lyric" class="text-center text-h6 text-bold ellipsis-2-lines text-purple q-mb-md absolute-bottom">
-            <!-- 歌词占位 -->
-        </div>
-      </q-card>
+    <q-footer class="q-pa-none">
+      <LyricsBar />
       <PlayerBar />
     </q-footer>
   </q-layout>
@@ -114,13 +134,15 @@
 <script>
 import PlayerBar from 'components/PlayerBar'
 import AudioPlayer from 'components/AudioPlayer'
+import LyricsBar from 'components/LyricsBar'
 
 export default {
   name: 'MainLayout',
 
   components: {
     PlayerBar,
-    AudioPlayer
+    AudioPlayer,
+    LyricsBar,
   },
 
   data () {
@@ -129,11 +151,17 @@ export default {
       drawerOpen: false,
       miniState: true,
       confirm: false,
+      randId: null,
       links: [
         {
           title: '媒体库',
           icon: 'widgets',
           path: '/'
+        },
+        {
+          title: '我的收藏',
+          icon: 'favorite',
+          path: '/favourites'
         },
         {
           title: '社团',
@@ -163,6 +191,10 @@ export default {
     keyword () {
       this.$router.push(`/search/${this.keyword}`)
     },
+
+    randId () {
+      this.$router.push(`/work/${this.randId}`)
+    }
   },
 
   created () {
@@ -192,6 +224,31 @@ export default {
         })
     },
 
+    randomPlay() {
+      this.requestRandomWork();
+    },
+
+    requestRandomWork () {
+      const params = {
+        order: 'betterRandom'
+      }
+      this.$axios.get('/api/works', { params })
+        .then((response) => {
+          const works = response.data.works
+          this.randId = works.length ? works[0].id : null;
+        })
+        .catch((error) => {
+          if (error.response) {
+            // 请求已发出，但服务器响应的状态码不在 2xx 范围内
+            if (error.response.status !== 401) {
+              this.showErrNotif(error.response.data.error || `${error.response.status} ${error.response.statusText}`)
+            }
+          } else {
+            this.showErrNotif(error.message || error)
+          }
+        })
+    },
+
     showWarnNotif (message) {
       this.$q.notify({
         message,
@@ -211,13 +268,27 @@ export default {
     logout () {
       this.$q.localStorage.set('jwt-token', '')
       this.$router.push('/login')
-    }
+    },
+
+    back () {
+      this.$router.go(-1)
+    },
+
+    isNotInMain () {
+      let path = this.$router.currentRoute.path
+      return (path && path !=='/' && path !== '/favourites') ? true : false;
+    },
   },
 }
 </script>
 
-<style lang="scss" scoped>
-  a {
-   text-decoration:none;
+
+<style lang="scss">
+// 侧边栏底部按钮
+  aside.q-drawer div.q-scrollarea > div.scroll > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
   }
 </style>

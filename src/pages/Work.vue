@@ -1,6 +1,6 @@
 <template>
   <div>
-    <WorkDetails :metadata="metadata" />
+    <WorkDetails :metadata="metadata" @reset="requestData()" />
     <!-- <WorkQueue :queue="tracks" :editable="false" /> -->
     <WorkTree :tree="tree" :editable="false" />
   </div>
@@ -31,6 +31,13 @@ export default {
     }
   },
 
+  watch: {
+    $route (to) {
+      this.workid = to.params.id;
+      this.requestData();
+    }
+  },
+
   created () {
     this.requestData()
   },
@@ -41,7 +48,7 @@ export default {
         .then(response => {
           this.metadata = response.data
         })
-        .catch((error) => {
+        .catch(() => {
           throw new Error(`Failed to request /api/work/${this.workid}`)
         })
 
@@ -49,7 +56,7 @@ export default {
         .then(response => {
           this.tree = response.data
         })
-        .catch((error) => {
+        .catch(() => {
           throw new Error(`Failed to request /api/tracks/${this.workid}`)
         })
     }
