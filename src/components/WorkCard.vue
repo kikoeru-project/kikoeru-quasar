@@ -78,7 +78,7 @@
     </div>
     
     <!-- 标签 -->
-    <div class="q-ma-xs">
+    <div class="q-ma-xs" v-if="showTags">
       <router-link
         v-for="(tag, index) in metadata.tags"
         :to="`/tag/${tag.id}`"
@@ -132,6 +132,7 @@ export default {
       },
       rating: 0,
       userMarked: false,
+      showTags: true
     }
   },
 
@@ -154,13 +155,18 @@ export default {
       this.requestMetadata()
     },
     
-    metadata () {
-      if (this.metadata.userRating) {
+    metadata (newMetaData) {
+      if (newMetaData.userRating) {
         this.userMarked = true;
-        this.rating = this.metadata.userRating;
+        this.rating = newMetaData.userRating;
       } else {
         this.userMarked = false;
-        this.rating = this.metadata.rate_average_2dp || 0;
+        this.rating = newMetaData.rate_average_2dp || 0;
+      }
+
+      // 极个别作品没有标签
+      if (newMetaData.tags && newMetaData.tags[0].name === null) {
+        this.showTags = false;
       }
     },
 
