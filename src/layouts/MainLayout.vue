@@ -102,6 +102,26 @@
             clickable
             v-ripple
             exact
+            to="/admin"
+            active-class="text-deep-purple text-weight-medium"
+            v-if="this.$store.state.User.group === 'administrator'"
+            @click="miniState = true"
+          >
+            <q-item-section avatar>
+              <q-icon name="tune" />
+            </q-item-section>
+
+            <q-item-section>
+              <q-item-label class="text-subtitle1">
+                设定
+              </q-item-label>
+            </q-item-section>
+          </q-item>
+
+          <q-item
+            clickable
+            v-ripple
+            exact
             active-class="text-deep-purple text-weight-medium"
             @click="confirm = true"
             v-if="authEnabled"
@@ -205,11 +225,6 @@ export default {
           title: '声优',
           icon: 'mic',
           path: '/vas'
-        },
-        {
-          title: '设定',
-          icon: 'tune',
-          path: '/admin'
         },
       ],
       sharedConfig: {}
