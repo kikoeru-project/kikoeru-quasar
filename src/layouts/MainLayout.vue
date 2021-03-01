@@ -11,7 +11,7 @@
             Kikoeru
           </router-link>
         </q-toolbar-title>
-        
+
         <q-input dark dense rounded standout v-model="keyword" debounce="500" input-class="text-right" class="q-mr-sm">
           <template v-slot:append>
             <q-icon v-if="keyword === ''" name="search" />
@@ -20,7 +20,7 @@
         </q-input>
 
       </q-toolbar>
-      
+
       <AudioPlayer />
     </q-header>
 
@@ -39,7 +39,7 @@
     >
       <q-scroll-area class="fit">
         <q-list>
-          <q-item 
+          <q-item
             clickable
             v-ripple
             exact
@@ -60,7 +60,7 @@
             </q-item-section>
           </q-item>
 
-          <q-item 
+          <q-item
             clickable
             v-ripple
             exact
@@ -78,7 +78,7 @@
             </q-item-section>
           </q-item>
 
-          <q-item 
+          <q-item
             clickable
             v-ripple
             exact
@@ -98,7 +98,7 @@
         </q-list>
 
         <q-list>
-          <q-item 
+          <q-item
             clickable
             v-ripple
             exact
@@ -252,6 +252,7 @@ export default {
         .then((res) => {
           this.$store.commit('User/INIT', res.data.user)
           this.$store.commit('User/SET_AUTH', res.data.auth)
+          this.$store.commit('User/SET_REG', res.data.reg)
         })
         .catch((error) => {
           if (error.response) {
