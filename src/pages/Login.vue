@@ -1,16 +1,32 @@
 <template>
-  <q-form @submit="login" style="width: 260px;" class="absolute-center	q-gutter-md">
+  <q-form @submit="onSubmit" style="width: 260px;" class="absolute-center	q-gutter-md">
     <q-input filled v-model="name" label="用户名" class="fit"
              lazy-rules
-             :rules="[ val => val.length >= 5 || '密码长度至少为 5' ]"
+             :rules="[ val => val && val.length >= 5 || '用户名长度至少为 5' ]"
     />
 
     <q-input filled type="password" v-model="password" label="密码" class="fit"
              lazy-rules
-             :rules="[ val => val.length >= 5 || '密码长度至少为 5' ]"
+             :rules="[ val => val && val.length >= 5 || '密码长度至少为 5' ]"
+             clearable
     />
-    <q-btn label="注册" color="secondary" class="fit" @click="reg" v-if="this.$store.state.User.reg"/>
-    <q-btn label="登录" type="submit" color="primary" class="fit" />
+
+    <!-- 仅在注册界面出现 -->
+    <q-input filled type="password" v-model="passwordConfirm" label="请再次输入密码" class="fit"
+             lazy-rules
+             bottom-slots
+             :rules="[ val => val && val === password || '两次密码必须一致' ]"
+             clearable
+             v-if="showRegisterForm"
+    />
+
+    <!-- 入口界面按钮 -->
+    <q-btn label="注册" color="secondary" class="fit" @click="navigateToRegister" v-if="this.$store.state.User.reg && !showRegisterForm"/>
+    <q-btn label="登录" type="submit" color="primary" class="fit" v-if="!showRegisterForm"/>
+
+    <!-- 注册界面按钮 -->
+    <q-btn label="去看看！" type="submit" color="secondary" class="fit" v-if="showRegisterForm"/>
+    <q-btn label="返回" color="primary" class="fit" @click="navigateBack" v-if="showRegisterForm"/>
   </q-form>
 </template>
 
@@ -25,13 +41,28 @@ export default {
     return {
       name: '',
       password: '',
+      passwordConfirm: '',
+      // false: login form
+      showRegisterForm: false
     }
   },
   mounted() {
     this.checkRegEnable();
   },
-
   methods: {
+    navigateToRegister() {
+      this.showRegisterForm = true;
+    },
+    navigateBack() {
+      this.showRegisterForm = false;
+    },
+    onSubmit(){
+      if (this.showRegisterForm) {
+        this.reg();
+      } else {
+        this.login();
+      }
+    },
     checkRegEnable () {
       this.$axios.get('/api/auth/reg')
         .then((res) => {
