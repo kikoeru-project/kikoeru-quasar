@@ -1,5 +1,5 @@
 <template>
-  <q-form style="width: 260px;" class="absolute-center	q-gutter-md">
+  <q-form @submit="login" style="width: 260px;" class="absolute-center	q-gutter-md">
     <q-input filled v-model="name" label="用户名" class="fit"
              lazy-rules
              :rules="[ val => val.length >= 5 || '密码长度至少为 5' ]"
@@ -10,7 +10,7 @@
              :rules="[ val => val.length >= 5 || '密码长度至少为 5' ]"
     />
     <q-btn label="注册" color="secondary" class="fit" @click="reg" v-if="this.$store.state.User.reg"/>
-    <q-btn label="登录" color="primary" class="fit" @click="login"/>
+    <q-btn label="登录" type="submit" color="primary" class="fit" />
   </q-form>
 </template>
 
