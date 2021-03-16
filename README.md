@@ -2,6 +2,8 @@
 
 A self-hosted web media player for listening to your DLsite voice works.
 
+[![unstable build status](https://github.com/umonaca/kikoeru-quasar/actions/workflows/docker-build-dev.yml/badge.svg)](https://github.com/umonaca/kikoeru-quasar/actions)
+
 ## Install the dependencies
 ```bash
 npm install
@@ -14,8 +16,13 @@ quasar dev
 
 
 ### Build the app for production
+If you prefer SPA:
 ```bash
 quasar build
+```
+If you prefer PWA:
+```
+quasar build -m pwa
 ```
 
 ### Customize the configuration
