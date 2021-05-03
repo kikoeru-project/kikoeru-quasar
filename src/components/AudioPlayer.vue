@@ -4,17 +4,55 @@
     <q-slide-transition>
       <q-card square v-show="currentPlayingFile.hash && !hide" class="fixed-bottom-right bg-white text-black audio-player" @mousewheel.prevent @touchmove.prevent>
         <!-- 音声封面 -->
-        <div class="bg-dark column justify-center albumart">
+        <div class="bg-dark row items-center albumart">
           <q-img contain transition="fade" :src="coverUrl" :ratio="4/3" />
           <q-btn dense round size="md" color="white" text-color="dark" icon="keyboard_arrow_down" @click="toggleHide()" class="absolute-top-left q-ma-sm" />
+          <q-btn dense round size="md" color="white" text-color="dark" icon="more_vert" class="absolute-top-right q-ma-sm">
+            <q-menu anchor="bottom right" self="top right">
+              <q-item clickable v-ripple @click="hideSeekButton = !hideSeekButton">
+                <q-item-section avatar>
+                  <q-icon :name="hideSeekButton ? 'done' : ''" />
+                </q-item-section>
+
+                <q-item-section>
+                  隐藏封面按钮
+                </q-item-section>
+              </q-item>
+              
+              <q-item clickable v-ripple @click="swapSeekButton = !swapSeekButton">
+                <q-item-section avatar>
+                  <q-icon :name="swapSeekButton ? 'done' : ''" />
+                </q-item-section>
+                <q-item-section>
+                  交换进度按钮与切换按钮
+                </q-item-section>
+              </q-item>
+              
+              <q-item clickable v-ripple @click="openWorkDetail()" v-close-popup>
+                <q-item-section avatar>
+                  <!-- placeholder -->
+                </q-item-section>
+                <q-item-section>
+                  打开作品详情
+                </q-item-section>
+              </q-item>
+            </q-menu>
+          </q-btn>
+          <div class="row absolute q-pl-md q-pr-md col-12 justify-between">
+            <q-btn v-if="!hideSeekButton" round size="lg" color="white" text-color="dark" style="opacity: 0.8" @click="swapSeekButton ? previousTrack() : rewind(true)" :icon="swapSeekButton ? 'skip_previous': rewindIcon" />
+            <q-btn v-if="!hideSeekButton" round size="lg" color="white" text-color="dark" style="opacity: 0.8" @click="swapSeekButton ? nextTrack() : forward(true)" :icon="swapSeekButton ? 'skip_next' : forwardIcon" />
+          </div>
         </div>
 
         <!-- 进度条控件 -->
-        <div class="row items-center q-mx-sm" style="height: 40px">
+        <div class="row items-center q-mx-sm q-my-sm" style="height: 40px">
           <div class="col-auto">{{ formatSeconds(currentTime) }}</div>
           <AudioElement class="col" />
           <div class="col-auto">{{ formatSeconds(duration) }}</div>
         </div>
+
+        <!-- Place holder for iOS -->
+        <div style="height: 5px" v-if="$q.platform.is.ios" />
 
         <q-item style="height: 55px; padding: 0px 15px;" class="text-center non-selectable">
           <q-item-section>
@@ -23,17 +61,21 @@
           </q-item-section>
         </q-item>
 
+        <!-- Place holder for iOS -->
+        <div  style="height: 10px" v-if="$q.platform.is.ios" />
+
         <!-- 播放按钮控件 -->
         <div class="row justify-around" style="height: 65px">
           <q-btn flat dense size="md" icon="queue_music" @click="showCurrentPlayList = !showCurrentPlayList" style="width: 55px" class="col-auto" />
-          <q-btn flat dense size="lg" icon="skip_previous" @click="previousTrack()" style="width: 55px" class="col-auto" />
+          <q-btn flat dense size="lg" :icon="swapSeekButton ? rewindIcon : 'skip_previous'" @click="swapSeekButton ? rewind(true) : previousTrack()" style="width: 55px" class="col-auto" />
           <q-btn flat dense size="28px" :icon="playingIcon" @click="togglePlaying()" style="width: 65px" class="col-auto" />
-          <q-btn flat dense size="lg" icon="skip_next" @click="nextTrack()" style="width: 55px" class="col-auto" />
+          <q-btn flat dense size="lg" :icon="swapSeekButton ? forwardIcon : 'skip_next'" @click="swapSeekButton ? forward(true) : nextTrack()" style="width: 55px" class="col-auto" />
           <q-btn flat dense size="md" :icon="playModeIcon" @click="changePlayMode()" style="width: 55px" class="col-auto" />
         </div>
 
         <!-- 音量控件 -->
-        <div class="row items-center q-mx-lg" style="height: 50px">
+        <!-- HTML5 volume in iOS is read-only -->
+        <div class="row items-center q-mx-lg" style="height: 50px" v-if="!$q.platform.is.ios">
           <q-icon name="volume_down" size="sm" class="col-auto" />
           <vue-slider 
             v-model="volume"
@@ -108,7 +150,7 @@
 <script>
 import draggable from 'vuedraggable'
 import AudioElement from 'components/AudioElement'
-import { mapState, mapGetters } from 'vuex'
+import { mapState, mapGetters, mapMutations } from 'vuex'
 
 export default {
   name: 'AudioPlayer',
@@ -122,7 +164,18 @@ export default {
     return {
       showCurrentPlayList: false,
       editCurrentPlayList: false,
-      queueCopy: []
+      queueCopy: [],
+      hideSeekButton: false,
+      swapSeekButton: false
+    }
+  },
+
+  mounted () {
+    if (this.$q.localStorage.has('hideSeekButton')) {
+      this.hideSeekButton = this.$q.localStorage.getItem('hideSeekButton')
+    }
+    if (this.$q.localStorage.has('swapSeekButton')) {
+      this.swapSeekButton = this.$q.localStorage.getItem('swapSeekButton')
     }
   },
 
@@ -140,6 +193,14 @@ export default {
       if (flag === false) {
         this.editCurrentPlayList = false
       }
+    },
+
+    hideSeekButton (option) {
+      this.$q.localStorage.set('hideSeekButton', option)
+    },
+
+    swapSeekButton (option) {
+      this.$q.localStorage.set('swapSeekButton', option)
     }
   },
 
@@ -151,12 +212,17 @@ export default {
       return hash ? `/api/cover/${hash.split('/')[0]}?token=${token}` : ""
     },
 
+    workDetailUrl () {
+      const hash = this.currentPlayingFile.hash
+      return hash ? `/work/${hash.split('/')[0]}` : ""
+    },
+
     volume: {
       get () {
         return this.$store.state.AudioPlayer.volume
       },
       set (val) {
-        this.$store.commit('AudioPlayer/SET_VOLUME', val)
+        this.SET_VOLUME(val)
       }
     },
 
@@ -184,13 +250,41 @@ export default {
       return this.playing ? "pause" : "play_arrow"
     },
 
+    rewindIcon () {
+      switch (this.rewindSeekTime) {
+        case 5:
+          return 'replay_5'
+        case 10:
+          return 'replay_10'
+        case 30:
+          return 'replay_30'
+        default:
+          return 'replay_5'
+      }
+    },
+
+    forwardIcon () {
+      switch (this.forwardSeekTime) {
+        case 5:
+          return 'forward_5'
+        case 10:
+          return 'forward_10'
+        case 30:
+          return 'forward_30'
+        default:
+          return 'forward_5'
+      }
+    },
+
     ...mapState('AudioPlayer', [
       'playing',
       'hide',
       'currentTime',
       'duration',
       'queueIndex',
-      'playMode'
+      'playMode',
+      'rewindSeekTime',
+      'forwardSeekTime'
     ]),
     
     ...mapGetters('AudioPlayer', [
@@ -199,29 +293,23 @@ export default {
   },
 
   methods: {
-    toggleHide () {
-      this.$store.commit('AudioPlayer/TOGGLE_HIDE')
-    },
-
-    togglePlaying () {
-      this.$store.commit('AudioPlayer/TOGGLE_PLAYING')
-    },
-
-    nextTrack () {
-      this.$store.commit('AudioPlayer/NEXT_TRACK')
-    },
-
-    previousTrack () {
-      this.$store.commit('AudioPlayer/PREVIOUS_TRACK')
-    },
-
-    changePlayMode () {
-      this.$store.commit('AudioPlayer/CHANGE_PLAY_MODE')
-    },
-
-    setVolume (val) {
-      this.$store.commit('AudioPlayer/SET_VOLUME', val)
-    },
+    ...mapMutations('AudioPlayer', {
+      toggleHide: 'TOGGLE_HIDE',
+      togglePlaying: 'TOGGLE_PLAYING',
+      nextTrack: 'NEXT_TRACK',
+      previousTrack: 'PREVIOUS_TRACK',
+      changePlayMode: 'CHANGE_PLAY_MODE',
+      setVolume: 'SET_VOLUME',
+      rewind: 'SET_REWIND_SEEK_MODE',
+      forward: 'SET_FORWARD_SEEK_MODE'
+    }),
+    ...mapMutations('AudioPlayer', [
+      'SET_TRACK',
+      'SET_QUEUE',
+      'REMOVE_FROM_QUEUE',
+      'EMPTY_QUEUE',
+      'SET_VOLUME'
+    ]),
 
     formatSeconds (seconds) {
       let h = Math.floor(seconds / 3600) < 10
@@ -249,7 +337,7 @@ export default {
 
     onClickTrack (index) {
       if (!this.editCurrentPlayList) {
-        this.$store.commit('AudioPlayer/SET_TRACK', index)
+        this.SET_TRACK(index)
         this.showCurrentPlayList = false
       }
     },
@@ -266,7 +354,7 @@ export default {
         index = this.queueIndex
       }
    
-      this.$store.commit('AudioPlayer/SET_QUEUE', {
+      this.SET_QUEUE({
         queue: this.queueCopy.concat(),
         index: index,
         resetPlaying: false
@@ -274,11 +362,20 @@ export default {
     },
 
     removeFromQueue (index) {
-      this.$store.commit('AudioPlayer/REMOVE_FROM_QUEUE', index)
+      this.REMOVE_FROM_QUEUE(index)
     },
 
     emptyQueue () {
-      this.$store.commit('AudioPlayer/EMPTY_QUEUE')
+      this.EMPTY_QUEUE()
+    },
+
+    openWorkDetail () {
+      if (this.workDetailUrl && this.$route.path !== this.workDetailUrl) {
+        this.$router.push(this.workDetailUrl)
+      }
+      if (this.$q.screen.lt.sm) {
+          this.toggleHide()
+      }
     }
   }
 }

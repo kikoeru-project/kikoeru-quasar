@@ -9,13 +9,13 @@
 
       <q-item-section class="q-gutter-y-xs column items-start" top v-on:click.self="showReviewDialog = true">
         <q-item-label lines="2" class="text-body2">
-          <router-link :to="`/circle/${metadata.circle.id}`" class="col-auto text-black">
+          <router-link :to="`/work/${metadata.id}`" class="col-auto text-black">
             {{metadata.title}}
           </router-link>
         </q-item-label>
 
         <div class="row q-gutter-x-sm col-auto" >
-          <router-link :to="`/circle/${metadata.circle.id}`" class="col-auto text-grey">
+          <router-link :to="`/works?circleId=${metadata.circle.id}`" class="col-auto text-grey">
             {{metadata.circle.name}}
           </router-link>
 
@@ -26,7 +26,7 @@
           <router-link
             v-for="(va, index) in metadata.vas"
             :key=index
-            :to="`/va/${va.id}`"
+            :to="`/works?vaId=${va.id}`"
             class="col-auto text-primary"
           >
             {{ va.name }}
@@ -51,7 +51,7 @@
         <q-item-label class="q-pt-sm" v-if="mode === 'review'">
           <q-card class="my-card col-auto" @click="showReviewDialog = true" v-show="metadata.review_text" >
             <q-card-section class="q-pa-sm">
-            {{metadata.review_text}}
+              <pre class="q-ma-none">{{metadata.review_text}}</pre>
             </q-card-section>
           </q-card>
         </q-item-label>
@@ -72,6 +72,7 @@
               {label: '想听', value: 'marked'},
               {label: '在听', value: 'listening'},
               {label: '听过', value: 'listened'},
+              {label: '重听', value: 'replay'},
               {label: '搁置', value: 'postponed'}
             ]"
           />
@@ -84,10 +85,13 @@
 </template>
 
 <script>
-import  WriteReview from './WriteReview'
+import WriteReview from './WriteReview'
+import NotifyMixin from '../mixins/Notification.js'
 
 export default {
   name: 'FavListItem',
+
+  mixins: [NotifyMixin],
 
   components: {
     WriteReview
@@ -154,11 +158,11 @@ export default {
     },
 
     processReview (modified) {
-      this.showReviewDialog = false;
       if (modified) {
         this.calledFromChild = true;
         this.$emit('reset');
       }
+      this.showReviewDialog = false;
     },
 
     setRating (newRating) {
@@ -220,23 +224,6 @@ export default {
           }
         })
     },
-
-    showSuccNotif (message) {
-      this.$q.notify({
-        message,
-        color: 'positive',
-        icon: 'done',
-        timeout: 500
-      })
-    },
-
-    showErrNotif (message) {
-      this.$q.notify({
-        message,
-        color: 'negative',
-        icon: 'bug_report'
-      })
-    }
   }
 
 }

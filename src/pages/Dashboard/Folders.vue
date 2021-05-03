@@ -63,7 +63,8 @@
           <q-toolbar-title>封面文件夹路径</q-toolbar-title>
         </q-toolbar>
 
-        <q-input outlined dense required v-model="config.coverFolderDir" class="q-pa-sm" />
+        <div v-if="config.coverUseDefaultPath" class="q-pa-md">已指定为默认路径，即程序所在位置下的covers文件夹。如需修改，请前往高级设置并取消“封面使用默认路径”。</div>
+        <q-input v-else outlined dense required v-model="config.coverFolderDir" class="q-pa-sm" />
       </q-card>
 
       <div class="q-ma-lg row justify-end">
@@ -74,8 +75,12 @@
 </template>
 
 <script>
+import NotifyMixin from '../../mixins/Notification.js'
+
 export default {
   name: 'Folders',
+
+  mixins: [NotifyMixin],
 
   data () {
     return {
@@ -92,9 +97,10 @@ export default {
 
   methods: {
     requestConfig () {
-      this.$axios.get('/api/config')
+      this.$axios.get('/api/config/admin')
         .then((response) => {
           this.config = response.data.config
+          this.rootFolder.path = response.data.config.voiceWorkDefaultPath
         })
         .catch((error) => {
           if (error.response) {
@@ -110,7 +116,7 @@ export default {
 
     onSubmit () {
       this.loading = true
-      this.$axios.put('/api/config', {
+      this.$axios.put('/api/config/admin', {
         config: this.config
       })
         .then((response) => {
@@ -144,23 +150,6 @@ export default {
       this.config.rootFolders.splice(index, 1)
       this.onSubmit()
     },
-
-    showSuccNotif (message) {
-      this.$q.notify({
-        message,
-        color: 'positive',
-        icon: 'done',
-        timeout: 500
-      })
-    },
-
-    showErrNotif (message) {
-      this.$q.notify({
-        message,
-        color: 'negative',
-        icon: 'bug_report'
-      })
-    }
   },
 
   created () {

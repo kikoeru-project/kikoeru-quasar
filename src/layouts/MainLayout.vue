@@ -1,17 +1,17 @@
 <template>
   <q-layout view="hHh Lpr lFf" class="bg-grey-3">
     <q-header class="shadow-4">
-      <q-toolbar>
+      <q-toolbar class="row justify-between">
         <q-btn flat dense round @click="drawerOpen = !drawerOpen" icon="menu" aria-label="Menu" />
 
-        <q-btn flat size="md" icon="arrow_back_ios" @click="back()" v-if="isNotInMain()"/>
+        <q-btn flat size="md" icon="arrow_back_ios" @click="back()" v-if="isNotAtHomePage"/>
 
         <q-toolbar-title class="gt-xs">
           <router-link :to="'/'" class="text-white">
             Kikoeru
           </router-link>
         </q-toolbar-title>
-        
+
         <q-input dark dense rounded standout v-model="keyword" debounce="500" input-class="text-right" class="q-mr-sm">
           <template v-slot:append>
             <q-icon v-if="keyword === ''" name="search" />
@@ -20,7 +20,7 @@
         </q-input>
 
       </q-toolbar>
-      
+
       <AudioPlayer />
     </q-header>
 
@@ -39,7 +39,7 @@
     >
       <q-scroll-area class="fit">
         <q-list>
-          <q-item 
+          <q-item
             clickable
             v-ripple
             exact
@@ -60,7 +60,7 @@
             </q-item-section>
           </q-item>
 
-          <q-item 
+          <q-item
             clickable
             v-ripple
             exact
@@ -77,10 +77,28 @@
               </q-item-label>
             </q-item-section>
           </q-item>
+
+          <q-item
+            clickable
+            v-ripple
+            exact
+            active-class="text-deep-purple text-weight-medium"
+            @click="showTimer = true"
+          >
+            <q-item-section avatar>
+              <q-icon name="bedtime" />
+            </q-item-section>
+
+            <q-item-section>
+              <q-item-label class="text-subtitle1">
+                睡眠模式
+              </q-item-label>
+            </q-item-section>
+          </q-item>
         </q-list>
 
         <q-list>
-          <q-item 
+          <q-item
             clickable
             v-ripple
             exact
@@ -96,6 +114,7 @@
               <q-item-label class="text-subtitle1">
                 登出
               </q-item-label>
+              <q-item-label caption lines="2">{{ userName }}</q-item-label>
             </q-item-section>
           </q-item>
         </q-list>
@@ -116,9 +135,13 @@
       </q-card>
     </q-dialog>
 
+    <SleepMode v-model="showTimer" />
+
     <q-page-container>
       <!-- <q-page padding> -->
-        <router-view class="page-content" />
+        <keep-alive include="Works">
+          <router-view />
+        </keep-alive>
       <!-- </q-page> -->
         <q-page-scroller position="bottom-right" :scroll-offset="150" :offset="[18, 18]">
           <q-btn fab icon="keyboard_arrow_up" color="accent" />
@@ -136,14 +159,20 @@
 import PlayerBar from 'components/PlayerBar'
 import AudioPlayer from 'components/AudioPlayer'
 import LyricsBar from 'components/LyricsBar'
+import SleepMode from 'components/SleepMode'
+import NotifyMixin from '../mixins/Notification.js'
+import { mapMutations, mapState } from 'vuex'
 
 export default {
   name: 'MainLayout',
+
+  mixins: [NotifyMixin],
 
   components: {
     PlayerBar,
     AudioPlayer,
     LyricsBar,
+    SleepMode
   },
 
   data () {
@@ -153,6 +182,7 @@ export default {
       miniState: true,
       confirm: false,
       randId: null,
+      showTimer: false,
       links: [
         {
           title: '媒体库',
@@ -184,33 +214,50 @@ export default {
           icon: 'tune',
           path: '/admin'
         },
-      ]
+      ],
+      sharedConfig: {}
     }
   },
 
   watch: {
     keyword () {
-      this.$router.push(`/search/${this.keyword}`)
+      this.$router.push(this.keyword ? `/works?keyword=${this.keyword}` : `/works`)
     },
 
     randId () {
       this.$router.push(`/work/${this.randId}`)
+    },
+    sharedConfig (config) {
+      this.SET_REWIND_SEEK_TIME(config.rewindSeekTime);
+      this.SET_FORWARD_SEEK_TIME(config.forwardSeekTime);
     }
   },
 
-  created () {
+  mounted () {
     this.initUser();
+    this.checkUpdate();
+    this.readSharedConfig();
   },
 
   computed: {
-    authEnabled: function () {
-      return this.$store.state.User.auth;
-    }
+    isNotAtHomePage () {
+      const path = this.$route.path
+      return path && path !=='/' && path !=='/works' && path !== '/favourites';
+    },
+
+    ...mapState('User', {
+      userName: 'name',
+      authEnabled: 'auth'
+    })
   },
 
   methods: {
+    ...mapMutations('AudioPlayer', [
+      'SET_REWIND_SEEK_TIME',
+      'SET_FORWARD_SEEK_TIME'
+    ]),
     initUser () {
-      this.$axios.get('/api/me')
+      this.$axios.get('/api/auth/me')
         .then((res) => {
           this.$store.commit('User/INIT', res.data.user)
           this.$store.commit('User/SET_AUTH', res.data.auth)
@@ -219,9 +266,76 @@ export default {
           if (error.response) {
             // 请求已发出，但服务器响应的状态码不在 2xx 范围内
             if (error.response.status === 401) {
-              this.showWarnNotif(error.response.data.error)
+              // this.showWarnNotif(error.response.data.error)
               // 验证失败，跳转到登录页面
-              this.$router.push('/login')
+              const path = this.$router.currentRoute.path
+              if (path !=='/login') {
+                this.$router.push('/login');
+              }
+            } else {
+              this.showErrNotif(error.response.data.error || `${error.response.status} ${error.response.statusText}`)
+            }
+          } else {
+            this.showErrNotif(error.message || error)
+          }
+        })
+    },
+
+    checkUpdate () {
+      this.$axios.get('/api/version')
+        .then((res) => {
+          if (res.data.update_available && res.data.notifyUser) {
+            this.$q.notify({
+              message: 'GitHub上有新版本',
+              color: 'primary',
+              textColor: 'white',
+              icon: 'cloud_download',
+              timeout: 5000,
+              actions: [
+                { label: '好', color: 'white' },
+                { label: '查看', color: 'white', handler: () => {
+                    Object.assign(document.createElement('a'), {
+                      target: '_blank',
+                      href: 'https://github.com/umonaca/kikoeru-express/releases',
+                    }).click();
+                  }
+                }
+              ],
+            })
+          }
+
+          if (res.data.lockFileExists) {
+            this.$q.notify ({
+              message: res.data.lockReason,
+              type: 'warning',
+              timeout: 60000,
+              actions: [
+                { label: '以后提醒我', color: 'black' },
+                { label: '前往扫描页', color: 'black', handler: () => this.$router.push('/admin/scanner')}
+              ],
+            })
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+        })
+    },
+
+    readSharedConfig(){
+      this.$axios.get('/api/config/shared')
+        .then((response) => {
+           this.sharedConfig = response.data.sharedConfig;
+        })
+        .catch((error) => {
+          if (error.response) {
+            // 请求已发出，但服务器响应的状态码不在 2xx 范围内
+            if (error.response.status === 401) {
+              // this.showWarnNotif(error.response.data.error)
+              // 验证失败，跳转到登录页面
+              const path = this.$router.currentRoute.path
+              if (path !=='/login') {
+                this.$router.push('/login');
+              }
             } else {
               this.showErrNotif(error.response.data.error || `${error.response.status} ${error.response.statusText}`)
             }
@@ -256,22 +370,6 @@ export default {
         })
     },
 
-    showWarnNotif (message) {
-      this.$q.notify({
-        message,
-        color: 'warning',
-        icon: 'warning',
-      })
-    },
-
-    showErrNotif (message) {
-      this.$q.notify({
-        message,
-        color: 'negative',
-        icon: 'bug_report'
-      })
-    },
-    
     logout () {
       this.$q.localStorage.set('jwt-token', '')
       this.$router.push('/login')
@@ -279,12 +377,7 @@ export default {
 
     back () {
       this.$router.go(-1)
-    },
-
-    isNotInMain () {
-      let path = this.$router.currentRoute.path
-      return (path && path !=='/' && path !== '/favourites') ? true : false;
-    },
+    }
   },
 }
 </script>

@@ -92,7 +92,11 @@
 </template>
 
 <script>
+import NotifyMixin from '../../mixins/Notification.js'
+
 export default {
+  mixins: [NotifyMixin],
+
   data () {
     return {
       selected: [],
@@ -127,7 +131,7 @@ export default {
 
     addNewUser () {
       this.loadingAddNewUser = true
-      this.$axios.post('/api/user', {
+      this.$axios.post('/api/credentials/user', {
         name: this.newuser.name,
         password: this.newuser.password,
         group: this.newuser.group
@@ -154,7 +158,7 @@ export default {
 
     deleteUsers () {
       this.loadingDeleteUsers = true
-      this.$axios.delete('/api/user', {
+      this.$axios.delete('/api/credentials/user', {
         data: { users: this.selected },
       })
         .then((response) => {
@@ -183,7 +187,7 @@ export default {
 
     updateAdminPassword () {
       this.loadingUpdateAdminPassword = true
-      this.$axios.put('/api/user', {
+      this.$axios.put('/api/credentials/user', {
         name: 'admin',
         newPassword: this.adminNewPassword
       })
@@ -215,7 +219,7 @@ export default {
     },
 
     requestUsers () {
-      this.$axios.get('/api/users')
+      this.$axios.get('/api/credentials/users')
         .then((response) => {
           this.users = response.data.users
         })
@@ -230,31 +234,6 @@ export default {
           }
         })
     },
-
-    showSuccNotif (message) {
-      this.$q.notify({
-        message,
-        color: 'positive',
-        icon: 'done',
-        timeout: 500
-      })
-    },
-
-    showWarnNotif (message) {
-      this.$q.notify({
-        message,
-        color: 'warning',
-        icon: 'warning',
-      })
-    },
-
-    showErrNotif (message) {
-      this.$q.notify({
-        message,
-        color: 'negative',
-        icon: 'bug_report'
-      })
-    }
   },
 
   created () {

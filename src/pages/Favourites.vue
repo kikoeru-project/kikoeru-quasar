@@ -4,6 +4,7 @@
       <div class="col-lg-3 col-sm-12 col-xs-12">
           <q-btn-toggle
             v-model="mode"
+            @input="changeMode"
             spread
             no-caps
             rounded
@@ -18,14 +19,25 @@
             ]"
           />
       </div>
-      <div class="col-auto gt-sm">
-        <q-select dense rounded outlined v-model="sortBy" :options="sortOptions" bg-color="white" />
+      <div class="col-auto gt-sm row">
+        <q-select dense rounded outlined v-model="sortBy" :options="sortOptions" bg-color="white" class="q-mx-sm"/>
+        <q-btn
+          :disable="sortButtonDisabled"
+          dense
+          rounded
+          color="white"
+          :text-color="sortButtonDisabled? 'grey': 'black'"
+          :icon="direction? 'arrow_downward' : 'arrow_upward'"
+          @click="switchSortMode" 
+        />
       </div>
+
     </div>
     <div class="q-pt-md q-px-sm">
       <q-btn-toggle
         v-if="mode === 'progress'"
         v-model="progressFilter"
+        @input="changeProgressFilter"
         toggle-color="primary"
         color="white"
         text-color="black"
@@ -34,6 +46,7 @@
           {label: '想听', value: 'marked'},
           {label: '在听', value: 'listening'},
           {label: '听过', value: 'listened'},
+          {label: '重听', value: 'replay'},
           {label: '搁置', value: 'postponed'}
         ]"
       />
@@ -41,7 +54,8 @@
 
     <div class="q-pt-md">
       <div class="q-px-sm q-py-md">
-        <q-infinite-scroll @load="onLoad" :offset="500" :disable="stopLoad" v-if="mode !=='folder'">
+        <q-infinite-scroll @load="onLoad" :offset="500" :disable="stopLoad" ref="scroll" v-if="mode !=='folder'">
+          <div class="row justify-center text-grey" v-if="works.length === 0">在作品界面上点击星标、标记进度，标记的音声就会出现在这里啦</div>
           <q-list bordered separator class="shadow-2" v-if="works.length">
              <FavListItem v-for="work in works" :key="work.id" :workid="work.id" :metadata="work" @reset="reset()" :mode="mode"></FavListItem> 
           </q-list>
@@ -60,12 +74,36 @@
 
 <script>
 import FavListItem from 'components/FavListItem'
+import NotifyMixin from '../mixins/Notification.js'
 
 export default {
   name: 'Favourites',
 
+  mixins: [NotifyMixin],
+
   components: {
     FavListItem
+  },
+
+  props: {
+    route: {
+      type: String,
+      default: 'review'
+    },
+    progress: {
+      type: String,
+      default: 'marked'
+    }
+  },
+
+  computed: {
+    direction () {
+      return this.sortMode === 'desc'
+    },
+
+    sortButtonDisabled () {
+      return this.sortBy.order === 'allage' || this.sortBy.order === 'nsfw'
+    }
   },
 
   data() {
@@ -74,55 +112,48 @@ export default {
       progressFilter: 'marked',
       works: [],
       stopLoad: false,
-      pagination: {},
+      pagination: { currentPage:0, pageSize:12, totalCount:0 },
+      sortMode: 'desc',
       sortBy: {
-          label: '按照标记时间排序',
-          order: 'updated_at',
-          sort: 'desc'
+          label: '标记时间',
+          order: 'updated_at'
         },
       sortOptions: [
         {
-          label: '按照标记时间排序',
-          order: 'updated_at',
-          sort: 'desc'
+          label: '标记时间',
+          order: 'updated_at'
         },
         {
-          label: '按照评价排序',
-          order: 'userRating',
-          sort: 'desc'
+          label: '评价',
+          order: 'userRating'
         },
         {
-          label: '按照新作优先顺序',
-          order: 'release',
-          sort: 'desc'
+          label: '发布时间',
+          order: 'release'
         },
         {
-          label: '按照旧作优先顺序',
-          order: 'release',
-          sort: 'asc'
+          label: '评论数量',
+          order: 'review_count'
         },
         {
-          label: '按照评论多到少的顺序',
-          order: 'review_count',
-          sort: 'desc'
+          label: '售出数量',
+          order: 'dl_count'
         },
         {
-          label: '按照售出数量多到少的顺序',
-          order: 'dl_count',
-          sort: 'desc'
+          label: '全年龄新作',
+          order: 'allage'
         },
         {
-          label: '按照全年龄新作优先的顺序',
-          order: 'nsfw',
-          sort: 'asc'
-        },
-        {
-          label: '按照18禁新作优先的顺序',
-          order: 'nsfw',
-          sort: 'desc'
+          label: '18禁新作',
+          order: 'nsfw'
         }
       ]
     }
+  },
+
+  created() {
+    this.mode = this.route;
+    this.progressFilter = this.progress;
   },
 
   mounted() {
@@ -140,23 +171,54 @@ export default {
       localStorage.sortByFavourites = JSON.stringify(newSortOptionSetting);
       this.reset();
     },
-    mode() {
+
+    sortMode() {
       this.reset();
     },
-    progressFilter() {
+
+    // Browser back and forth
+    route() {
+      this.mode = this.route;
+      this.reset();
+    },
+    progress() {
+      this.progressFilter = this.progress;
       this.reset();
     }
   },
 
   methods: {
+    // Split two-way binding
+    changeMode(newMode) {
+      this.$router.push(`/favourites/${newMode}`);
+      this.reset();
+    },
+
+    // Split two-way binding
+    changeProgressFilter(newFilter) {
+      this.$router.push(`/favourites/progress/${newFilter}`);
+      this.reset();
+    },
+
+    switchSortMode() {
+      if(this.sortMode ==='desc') {
+        this.sortMode = 'asc'
+      } else {
+        this.sortMode = 'desc'
+      }
+    },
+
     onLoad (index, done) {
       this.requestWorksQueue()
         .then(() => done())
     },
 
     reset () {
+      // Freeze the scroller first
       this.stopLoad = true
-      this.pagination = {}
+      this.pagination = { currentPage:0, pageSize:12, totalCount:0 }
+      // Manually fetch first page content before enable scroller
+      // Note: the internal API of the infinite scroller does not work well
       this.requestWorksQueue()
         .then(() => {
           this.stopLoad = false
@@ -166,15 +228,25 @@ export default {
     requestWorksQueue () {
       const params = {
         order: this.sortBy.order,
-        sort: this.sortBy.sort,
+        sort: this.sortMode,
         page: this.pagination.currentPage + 1 || 1
+      }
+
+      if (this.sortBy.order === 'allage') {
+        params.order = 'nsfw'
+        params.sort = 'asc'
+      }
+
+      if (this.sortBy.order === 'nsfw') {
+        params.order = 'nsfw'
+        params.sort = 'desc'
       }
 
       if (this.mode === 'progress') {
         params.filter = this.progressFilter;
       }
 
-      return this.$axios.get('/api/favourites', { params })
+      return this.$axios.get('/api/review', { params })
         .then((response) => {                  
           const works = response.data.works
           this.works = (params.page === 1) ? works.concat() : this.works.concat(works)
@@ -195,14 +267,6 @@ export default {
           }
           this.stopLoad = true
         })
-    },
-
-    showErrNotif (message) {
-      this.$q.notify({
-        message,
-        color: 'negative',
-        icon: 'bug_report'
-      })
     },
   }
 }

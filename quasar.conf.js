@@ -52,6 +52,7 @@ module.exports = function (ctx) {
       // Quasar plugins
       plugins: [
         'LocalStorage',
+        'SessionStorage',
         'Notify'
       ]
     },
@@ -80,7 +81,10 @@ module.exports = function (ctx) {
           loader: 'eslint-loader',
           exclude: /[\\/]node_modules[\\/]/
         })
-      }
+      },
+      modern: true,
+      sourceMap: true,
+      devtool: 'source-map'
     },
 
     // Full list of options: https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-devServer
@@ -95,7 +99,8 @@ module.exports = function (ctx) {
         '/socket.io': {
           target: 'http://localhost:8888',
           ws: true
-        }
+        },
+        '/workbox': 'http://localhost:8888',
       }
     },
 
@@ -115,10 +120,12 @@ module.exports = function (ctx) {
         skipWaiting: true,
         clientsClaim: true,
         exclude: [
-          /manifest\.json$/
+          /manifest\.json$/,
+          /.*.js.map$/
         ],
         navigateFallbackBlacklist: [
-          /^\/api\/.*$/
+          /^\/api\/.*$/,
+          /\/media\/.*$/
         ],
         importWorkboxFrom: 'local'
       }, // only for GenerateSW

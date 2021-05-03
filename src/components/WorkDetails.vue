@@ -12,11 +12,11 @@
             {{metadata.title}}
           </router-link>
         </div>
-        
+
         <!-- 社团名 -->
         <div class="text-subtitle1 text-weight-regular">
-          <router-link :to="`/circle/${metadata.circle.id}`" class="text-grey">
-            {{metadata.circle.name}} 
+          <router-link :to="`/works?circleId=${metadata.circle.id}`" class="text-grey">
+            {{metadata.circle.name}}
           </router-link>
         </div>
 
@@ -51,7 +51,7 @@
                 />
 
                 <div class="col q-mx-sm"> ({{rate.count}}) </div>
-              </div>            
+              </div>
             </q-tooltip>
           </div>
 
@@ -66,21 +66,21 @@
 
           <!-- DLsite链接 -->
           <div class="col-auto">
-            <q-icon name="launch" size="xs" /><a class="text-blue" :href="`https://www.dlsite.com/home/work/=/product_id/RJ${String(metadata.id).padStart(6,'0')}.html`" target="_blank">DLsite</a>
+            <q-icon name="launch" size="xs" /><a class="text-blue" :href="`https://www.dlsite.com/home/work/=/product_id/RJ${String(metadata.id).padStart(6,'0')}.html`" rel="noreferrer noopener" target="_blank">DLsite</a>
           </div>
         </div>
       </div>
-      
+
       <!-- 价格&售出数 -->
       <div class="q-pt-sm q-pb-none">
         <span class="q-mx-sm text-weight-medium text-h6 text-red">{{metadata.price}} 日元</span> 售出数: {{metadata.dl_count}}
       </div>
 
       <!-- 标签 -->
-      <div class="q-px-none q-py-sm" v-if="showTags"> 
+      <div class="q-px-none q-py-sm" v-if="showTags">
         <router-link
           v-for="(tag, index) in metadata.tags"
-          :to="`/tag/${tag.id}`"
+          :to="`/works?tagId=${tag.id}`"
           :key=index
         >
           <q-chip size="md" class="shadow-4">
@@ -93,7 +93,7 @@
       <div class="q-px-none q-pt-sm q-py-sm">
         <router-link
           v-for="(va, index) in metadata.vas"
-          :to="`/va/${va.id}`"
+          :to="`/works?vaId=${va.id}`"
           :key=index
         >
           <q-chip square size="md" class="shadow-4" color="teal" text-color="white">
@@ -134,6 +134,14 @@
               <q-item-label>听过</q-item-label>
             </q-item-section>
           </q-item>
+          <q-item clickable @click="setProgress('replay')" class="q-pa-xs">
+            <q-item-section avatar>
+              <q-avatar icon="headset" v-show="progress === 'replay'" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>重听</q-item-label>
+            </q-item-section>
+          </q-item>
           <q-item clickable @click="setProgress('postponed')" class="q-pa-xs">
             <q-item-section avatar>
               <q-avatar icon="headset" v-show="progress === 'postponed'" />
@@ -149,15 +157,18 @@
 
       <WriteReview v-if="showReviewDialog" @closed="processReview" :workid="metadata.id" :metadata="metadata"></WriteReview>
     </div>
-  </div>  
+  </div>
 </template>
 
 <script>
 import CoverSFW from 'components/CoverSFW'
-import  WriteReview from './WriteReview'
+import WriteReview from './WriteReview'
+import NotifyMixin from '../mixins/Notification.js'
 
 export default {
   name: 'WorkDetails',
+
+  mixins: [NotifyMixin],
 
   components: {
     CoverSFW,
@@ -268,23 +279,6 @@ export default {
     processReview () {
       this.showReviewDialog = false;
     },
-
-    showSuccNotif (message) {
-      this.$q.notify({
-        message,
-        color: 'positive',
-        icon: 'done',
-        timeout: 500
-      })
-    },
-
-    showErrNotif (message) {
-      this.$q.notify({
-        message,
-        color: 'negative',
-        icon: 'bug_report'
-      })
-    }
   }
 }
 </script>

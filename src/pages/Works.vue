@@ -6,7 +6,7 @@
         ({{pagination.totalCount}})
       </span>
     </div>
-    
+
     <div :class="`row justify-center ${listMode ? 'list' : 'q-mx-md'}`">
       <q-infinite-scroll @load="onLoad" :offset="250" :disable="stopLoad" style="max-width: 1680px;" class="col">
         <div v-show="works.length" class="row justify-between q-mb-md q-mr-sm">
@@ -55,14 +55,14 @@
             ]"
             style="width: 85px;"
             class="col-auto"
-            v-if="windowWidth > 700 && listMode"
+            v-if="$q.screen.width > 700 && listMode"
           />
 
           <q-btn-toggle
             dense
             spread
             rounded
-            :disable="windowWidth < 1120"
+            :disable="$q.screen.width < 1120"
             v-model="detailMode"
             toggle-color="primary"
             color="white"
@@ -73,21 +73,21 @@
             ]"
             style="width: 85px;"
             class="col-auto"
-            v-if="windowWidth > 700 && !listMode"
+            v-if="$q.screen.width > 700 && !listMode"
           />
 
         </div>
-        
+
         <q-list v-if="listMode" bordered separator class="shadow-2">
-          <WorkListItem v-for="work in works" :key="work.id" :workid="work.id" :showLabel="showLabel && windowWidth > 700" />
+          <WorkListItem v-for="work in works" :key="work.id" :metadata="work" :showLabel="showLabel && $q.screen.width > 700" />
         </q-list>
 
         <div v-else class="row q-col-gutter-x-md q-col-gutter-y-lg">
-          <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3" :class="{'work-card': detailMode}" v-for="work in works" :key="work.id">
-            <WorkCard :workid="work.id" class="fit"/> 
-          </div> 
+          <div class="col-xs-12 col-sm-6 col-md-4" :class="detailMode ? 'col-lg-3 col-xl-3': 'col-lg-2 col-xl-2'" v-for="work in works" :key="work.id">
+            <WorkCard :metadata="work" :thumbnailMode="!detailMode" class="fit"/>
+          </div>
         </div>
-        
+
         <div v-show="stopLoad" class="q-mt-lg q-mb-xl text-h6 text-bold text-center">END</div>
 
         <template v-slot:loading>
@@ -103,32 +103,28 @@
 <script>
 import WorkCard from 'components/WorkCard'
 import WorkListItem from 'components/WorkListItem'
+import NotifyMixin from '../mixins/Notification.js'
 
 export default {
   name: 'Works',
+
+  mixins: [NotifyMixin],
 
   components: {
     WorkCard,
     WorkListItem
   },
 
-  props: {
-    restrict: {
-      type: String
-    }
-  },
-
   data () {
     return {
       listMode: false,
       showLabel: true,
-      detailMode: false,
+      detailMode: true,
       stopLoad: false,
       works: [],
       pageTitle: '',
       page: 1,
-      pagination: {},
-      windowWidth: window.innerWidth,
+      pagination: { currentPage:0, pageSize:12, totalCount:0 },
       seed: 7, // random sort
       sortOption: {
         label: '按照发售日期新到老的顺序',
@@ -226,14 +222,29 @@ export default {
 
   computed: {
     url () {
-      if (this.$route.params.keyword) {
-        return `/api/search/${this.$route.params.keyword}`
-      } else if (this.$route.params.id) {
-        return `/api/${this.restrict}/${this.$route.params.id}`
+      const query = this.$route.query
+      if (query.circleId) {
+        return `/api/circles/${this.$route.query.circleId}/works`
+      } else if (query.tagId) {
+        return `/api/tags/${this.$route.query.tagId}/works`
+      } else if (query.vaId) {
+        return `/api/vas/${this.$route.query.vaId}/works`
+      } else if (query.keyword) {
+        return `/api/search/${query.keyword}`
       } else {
         return '/api/works'
       }
     }
+  },
+
+  // keep-alive hooks
+  // <keep-alive /> is set in MainLayout
+  activated () {
+    this.stopLoad = false
+  },
+
+  deactivated () {
+    this.stopLoad = true
   },
 
   watch: {
@@ -298,24 +309,35 @@ export default {
     },
 
     refreshPageTitle () {
-      if (this.$route.params.id) {
-        const url = `/api/get-name/${this.restrict}/${this.$route.params.id}`
+      if (this.$route.query.circleId || this.$route.query.tagId || this.$route.query.vaId) {
+        let url = '', restrict = ''
+        if (this.$route.query.circleId) {
+          restrict = 'circles'
+          url = `/api/${restrict}/${this.$route.query.circleId}`
+        } else if (this.$route.query.tagId) {
+          restrict = 'tags'
+          url = `/api/${restrict}/${this.$route.query.tagId}`
+        } else {
+          restrict = 'vas'
+          url = `/api/${restrict}/${this.$route.query.vaId}`
+        }
+
         this.$axios.get(url)
           .then((response) => {
-            const name = response.data
+            const name = response.data.name
             let pageTitle
 
-            switch (this.restrict) {
-              case 'tag':
+            switch (restrict) {
+              case 'tags':
                 pageTitle = 'Works tagged with '
                 break
-              case 'va':
+              case 'vas':
                 pageTitle = 'Works voiced by '
                 break
-              case 'circle':
+              case 'circles':
                 pageTitle = 'Works by '
                 break
-            }    
+            }
             pageTitle += name || ''
 
             this.pageTitle = pageTitle
@@ -330,29 +352,21 @@ export default {
               this.showErrNotif(error.message || error)
             }
           })
-      } else if (this.$route.params.keyword) {
-        this.pageTitle = `Search by ${this.$route.params.keyword}`
+      } else if (this.$route.query.keyword) {
+        this.pageTitle = `Search by ${this.$route.query.keyword}`
       } else {
         this.pageTitle = 'All works'
-      } 
+      }
     },
 
     reset () {
       this.stopLoad = true
       this.refreshPageTitle()
-      this.pagination = {}
+      this.pagination = { currentPage:0, pageSize:12, totalCount:0 }
       this.requestWorksQueue()
         .then(() => {
           this.stopLoad = false
         })
-    },
-
-    showErrNotif (message) {
-      this.$q.notify({
-        message,
-        color: 'negative',
-        icon: 'bug_report'
-      })
     },
   }
 }
@@ -365,7 +379,7 @@ export default {
       padding: 0px 20px;
     }
   }
-  
+
   .work-card {
     // 宽度 > $breakpoint-xl-min
     @media (min-width: $breakpoint-md-min) {

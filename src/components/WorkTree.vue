@@ -17,7 +17,7 @@
           v-ripple
           v-for="(item, index) in fatherFolder"
           :key="index"
-          :active="item.type === 'file' && currentPlayingFile.hash === item.hash"
+          :active="item.type === 'audio' && currentPlayingFile.hash === item.hash"
           active-class="text-white bg-teal"
           @click="onClickItem(item)"
           class="non-selectable"
@@ -26,6 +26,7 @@
             <q-icon size="34px" v-if="item.type === 'folder'" color="amber" name="folder" />
             <q-icon size="34px" v-else-if="item.type === 'text'" color="info" name="description" />
             <q-icon size="34px" v-else-if="item.type === 'image'" color="orange" name="photo" />
+            <q-icon size="34px" v-else-if="item.type === 'other'" color="info" name="description" />
             <q-btn v-else round dense color="primary" :icon="playIcon(item.hash)" @click="onClickPlayButton(item.hash)" />
           </q-item-section>
 
@@ -36,7 +37,7 @@
 
           <!-- 上下文菜单 -->
           <q-menu
-            v-if="item.type === 'file' || item.type === 'text' || item.type === 'image'"
+            v-if="item.type === 'audio' || item.type === 'text' || item.type === 'image' || item.type === 'other'"
             touch-position
             context-menu
             auto-close
@@ -44,11 +45,11 @@
             transition-hide="jump-up"
           >
             <q-list separator>
-              <q-item clickable @click="addToQueue(item)" v-if="item.type === 'file'">
+              <q-item clickable @click="addToQueue(item)" v-if="item.type === 'audio'">
                 <q-item-section>添加到播放列表</q-item-section>
               </q-item>
 
-              <q-item clickable @click="playNext(item)" v-if="item.type === 'file'">
+              <q-item clickable @click="playNext(item)" v-if="item.type === 'audio'">
                 <q-item-section>下一曲播放</q-item-section>
               </q-item>
 
@@ -101,7 +102,7 @@ export default {
     queue () {
       const queue = []
       this.fatherFolder.forEach(item => {
-        if (item.type === 'file') {
+        if (item.type === 'audio') {
           queue.push(item)
         }
       })
@@ -127,7 +128,7 @@ export default {
       const initialPath = []
       let fatherFolder = this.tree.concat()
       while (fatherFolder.length === 1) {
-        if (fatherFolder[0].type === 'file') {
+        if (fatherFolder[0].type === 'audio') {
           break
         }
         initialPath.push(fatherFolder[0].title)
@@ -145,6 +146,8 @@ export default {
         this.path.push(item.title);
       } else if (item.type === 'text' || item.type === 'image') {
         this.openFile(item);
+      } else if (item.type === 'other') {
+        this.download(item);
       } else if (this.currentPlayingFile.hash !== item.hash) {
         this.$store.commit('AudioPlayer/SET_QUEUE', {
           queue: this.queue.concat(),
@@ -176,7 +179,8 @@ export default {
 
     download (file) {
       const token = this.$q.localStorage.getItem('jwt-token') || '';
-      const url = `/api/download/${file.hash}?token=${token}`;
+      // Fallback to old API for an old backend 
+      const url = file.mediaDownloadUrl ? `${file.mediaDownloadUrl}?token=${token}` : `/api/media/download/${file.hash}?token=${token}`;
       const link = document.createElement('a');
       link.href = url;
       link.target="_blank";
@@ -185,7 +189,8 @@ export default {
 
     openFile (file) {
       const token = this.$q.localStorage.getItem('jwt-token') || '';
-      const url = `/api/stream/${file.hash}?token=${token}`;
+      // Fallback to old API for an old backend 
+      const url = file.mediaStreamUrl ? `${file.mediaStreamUrl}?token=${token}` : `/api/media/stream/${file.hash}?token=${token}`;
       const link = document.createElement('a');
       link.href = url;
       link.target="_blank";
