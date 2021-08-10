@@ -6,6 +6,8 @@
   "cordovaId": "org.cordova.quasar.kikoeru",
   "capacitorId": "",
   "author": "Watanuki-Kimihiro",
+  "baseURL": "",
+  "__baseURLExample": "https://example.com",
   "private": true,
   "scripts": {
     "test": "node_modules/.bin/eslint ."
