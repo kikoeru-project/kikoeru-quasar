@@ -238,6 +238,9 @@ export default {
   },
 
   watch: {
+    '$q.dark.isActive' (isActive) {
+      this.$q.localStorage.set('dark', isActive)
+    },
     keyword () {
       this.$router.push(this.keyword ? `/works?keyword=${this.keyword}` : `/works`)
     },
@@ -255,6 +258,8 @@ export default {
     this.initUser();
     this.checkUpdate();
     this.readSharedConfig();
+
+    if (this.$q.localStorage.has('dark') && this.$q.localStorage.getItem('dark')) { this.$q.dark.set(true) }
   },
 
   computed: {
