@@ -9,6 +9,9 @@ export default {
     },
     classTextColor() {
       return this.$q.dark.isActive ? 'text-white' : 'text-black'
+    },
+    classBackgroundColor() {
+      return this.$q.dark.isActive ? 'bg-black' : 'bg-white'
     }
   }
 }
