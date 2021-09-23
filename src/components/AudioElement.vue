@@ -268,3 +268,9 @@ export default {
   }
 }
 </script>
+
+<style>
+.plyr--audio .plyr__controls {
+  background: inherit !important;
+}
+</style>

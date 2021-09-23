@@ -2,35 +2,35 @@
   <div>
     <!-- 播放器 -->
     <q-slide-transition>
-      <q-card square v-show="currentPlayingFile.hash && !hide" class="fixed-bottom-right bg-white text-black audio-player" @mousewheel.prevent @touchmove.prevent>
+      <q-card square v-show="currentPlayingFile.hash && !hide" class="fixed-bottom-right audio-player" :class="classTextColor" @mousewheel.prevent @touchmove.prevent>
         <!-- 音声封面 -->
         <div class="bg-dark row items-center albumart">
           <q-img contain transition="fade" :src="coverUrl" :ratio="4/3" />
-          <q-btn dense round size="md" color="white" text-color="dark" icon="keyboard_arrow_down" @click="toggleHide()" class="absolute-top-left q-ma-sm" />
-          <q-btn dense round size="md" color="white" text-color="dark" icon="more_vert" class="absolute-top-right q-ma-sm">
+          <q-btn dense round size="md" :color="color" :text-color="textColor" icon="keyboard_arrow_down" @click="toggleHide()" class="absolute-top-left q-ma-sm" />
+          <q-btn dense round size="md" :color="color" :text-color="textColor" icon="more_vert" class="absolute-top-right q-ma-sm">
             <q-menu anchor="bottom right" self="top right">
               <q-item clickable v-ripple @click="hideSeekButton = !hideSeekButton">
                 <q-item-section avatar>
-                  <q-icon :name="hideSeekButton ? 'done' : ''" />
+                  <q-icon :name="hideSeekButton ? 'check_box' : 'check_box_outline_blank'" />
                 </q-item-section>
 
                 <q-item-section>
                   隐藏封面按钮
                 </q-item-section>
               </q-item>
-              
+
               <q-item clickable v-ripple @click="swapSeekButton = !swapSeekButton">
                 <q-item-section avatar>
-                  <q-icon :name="swapSeekButton ? 'done' : ''" />
+                  <q-icon :name="swapSeekButton ? 'check_box' : 'check_box_outline_blank'" />
                 </q-item-section>
                 <q-item-section>
                   交换进度按钮与切换按钮
                 </q-item-section>
               </q-item>
-              
+
               <q-item clickable v-ripple @click="openWorkDetail()" v-close-popup>
                 <q-item-section avatar>
-                  <!-- placeholder -->
+                  <q-icon name="link" />
                 </q-item-section>
                 <q-item-section>
                   打开作品详情
@@ -39,8 +39,8 @@
             </q-menu>
           </q-btn>
           <div class="row absolute q-pl-md q-pr-md col-12 justify-between">
-            <q-btn v-if="!hideSeekButton" round size="lg" color="white" text-color="dark" style="opacity: 0.8" @click="swapSeekButton ? previousTrack() : rewind(true)" :icon="swapSeekButton ? 'skip_previous': rewindIcon" />
-            <q-btn v-if="!hideSeekButton" round size="lg" color="white" text-color="dark" style="opacity: 0.8" @click="swapSeekButton ? nextTrack() : forward(true)" :icon="swapSeekButton ? 'skip_next' : forwardIcon" />
+            <q-btn v-if="!hideSeekButton" round size="lg" :color="color" :text-color="textColor" style="opacity: 0.8" @click="swapSeekButton ? previousTrack() : rewind(true)" :icon="swapSeekButton ? 'skip_previous': rewindIcon" />
+            <q-btn v-if="!hideSeekButton" round size="lg" :color="color" :text-color="textColor" style="opacity: 0.8" @click="swapSeekButton ? nextTrack() : forward(true)" :icon="swapSeekButton ? 'skip_next' : forwardIcon" />
           </div>
         </div>
 
@@ -77,7 +77,7 @@
         <!-- HTML5 volume in iOS is read-only -->
         <div class="row items-center q-mx-lg" style="height: 50px" v-if="!$q.platform.is.ios">
           <q-icon name="volume_down" size="sm" class="col-auto" />
-          <vue-slider 
+          <vue-slider
             v-model="volume"
             :min="0"
             :max="1"
@@ -102,7 +102,7 @@
           <q-space />
           <q-btn dense round size="md" icon="delete_forever" color="red" @click="emptyQueue()" style="height: 35px; width: 35px;" class="col-auto" />
         </div>
-        
+
         <q-separator />
 
         <!-- 音频文件列表 -->
@@ -151,6 +151,7 @@
 import draggable from 'vuedraggable'
 import AudioElement from 'components/AudioElement'
 import { mapState, mapGetters, mapMutations } from 'vuex'
+import DarkMode from '../mixins/DarkMode'
 
 export default {
   name: 'AudioPlayer',
@@ -159,6 +160,8 @@ export default {
     draggable,
     AudioElement
   },
+
+  mixins: [DarkMode],
 
   data () {
     return {
@@ -286,7 +289,7 @@ export default {
       'rewindSeekTime',
       'forwardSeekTime'
     ]),
-    
+
     ...mapGetters('AudioPlayer', [
       'currentPlayingFile'
     ])
@@ -353,7 +356,7 @@ export default {
       } else {
         index = this.queueIndex
       }
-   
+
       this.SET_QUEUE({
         queue: this.queueCopy.concat(),
         index: index,

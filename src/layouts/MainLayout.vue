@@ -1,7 +1,7 @@
 <template>
-  <q-layout view="hHh Lpr lFf" class="bg-grey-3">
+  <q-layout view="hHh Lpr lFf" :class="`${!this.$q.dark.isActive && 'bg-grey-3'}`">
     <q-header class="shadow-4">
-      <q-toolbar class="row justify-between">
+      <q-toolbar class="row justify-between" :class="$q.dark.isActive && 'bg-dark'">
         <q-btn flat dense round @click="drawerOpen = !drawerOpen" icon="menu" aria-label="Menu" />
 
         <q-btn flat size="md" icon="arrow_back_ios" @click="back()" v-if="isNotAtHomePage"/>
@@ -35,7 +35,7 @@
       :width="230"
       :breakpoint="500"
       bordered
-      content-class="bg-grey-1"
+      :content-class="`${!this.$q.dark.isActive && 'bg-grey-1'}`"
     >
       <q-scroll-area class="fit">
         <q-list>
@@ -98,6 +98,24 @@
         </q-list>
 
         <q-list>
+          <q-item
+            clickable
+            v-ripple
+            exact
+            @click="$q.dark.toggle()"
+            active-class="text-deep-purple text-weight-medium"
+          >
+            <q-item-section avatar>
+              <q-icon :name="`${this.$q.dark.isActive ? 'wb_sunny' : 'nights_stay'}`" />
+            </q-item-section>
+
+            <q-item-section>
+              <q-item-label class="text-subtitle1">
+                黑暗模式
+              </q-item-label>
+            </q-item-section>
+          </q-item>
+
           <q-item
             clickable
             v-ripple
