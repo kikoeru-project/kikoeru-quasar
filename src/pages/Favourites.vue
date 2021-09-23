@@ -9,9 +9,9 @@
             no-caps
             rounded
             toggle-color="primary"
-            color="white"
+            :color="color"
             class="text-bold"
-            text-color="black"
+            :text-color="textColor"
             :options="[
               {label: '我的评价', value: 'review'},
               {label: '我的进度', value: 'progress'},
@@ -20,15 +20,16 @@
           />
       </div>
       <div class="col-auto gt-sm row">
-        <q-select dense rounded outlined v-model="sortBy" :options="sortOptions" bg-color="white" class="q-mx-sm"/>
+        <q-select dense rounded outlined v-model="sortBy" :options="sortOptions" :bg-color="color" class="q-mx-sm"/>
         <q-btn
           :disable="sortButtonDisabled"
           dense
           rounded
-          color="white"
-          :text-color="sortButtonDisabled? 'grey': 'black'"
+          :color="color"
+          :text-color="textColor"
+          v-show="!sortButtonDisabled"
           :icon="direction? 'arrow_downward' : 'arrow_upward'"
-          @click="switchSortMode" 
+          @click="switchSortMode"
         />
       </div>
 
@@ -57,7 +58,7 @@
         <q-infinite-scroll @load="onLoad" :offset="500" :disable="stopLoad" ref="scroll" v-if="mode !=='folder'">
           <div class="row justify-center text-grey" v-if="works.length === 0">在作品界面上点击星标、标记进度，标记的音声就会出现在这里啦</div>
           <q-list bordered separator class="shadow-2" v-if="works.length">
-             <FavListItem v-for="work in works" :key="work.id" :workid="work.id" :metadata="work" @reset="reset()" :mode="mode"></FavListItem> 
+             <FavListItem v-for="work in works" :key="work.id" :workid="work.id" :metadata="work" @reset="reset()" :mode="mode"></FavListItem>
           </q-list>
           <template v-slot:loading>
             <div class="row justify-center q-my-md">
@@ -75,11 +76,12 @@
 <script>
 import FavListItem from 'components/FavListItem'
 import NotifyMixin from '../mixins/Notification.js'
+import DarkMode from '../mixins/DarkMode'
 
 export default {
   name: 'Favourites',
 
-  mixins: [NotifyMixin],
+  mixins: [NotifyMixin, DarkMode],
 
   components: {
     FavListItem
@@ -247,7 +249,7 @@ export default {
       }
 
       return this.$axios.get('/api/review', { params })
-        .then((response) => {                  
+        .then((response) => {
           const works = response.data.works
           this.works = (params.page === 1) ? works.concat() : this.works.concat(works)
           this.pagination = response.data.pagination

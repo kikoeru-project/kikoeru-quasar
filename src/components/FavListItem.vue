@@ -1,6 +1,6 @@
 <template>
-  <q-item clickable class="row bg-white">
-      <q-item-section class="col-auto" top> 
+  <q-item clickable class="row" :class="classBackgroundColor">
+      <q-item-section class="col-auto" top>
         <router-link :to="`/work/${metadata.id}`">
           <q-img transition="fade" :src="coverUrl" style="height: 120px; width: 160px;" />
         </router-link>
@@ -9,7 +9,7 @@
 
       <q-item-section class="q-gutter-y-xs column items-start" top v-on:click.self="showReviewDialog = true">
         <q-item-label lines="2" class="text-body2">
-          <router-link :to="`/work/${metadata.id}`" class="col-auto text-black">
+          <router-link :to="`/work/${metadata.id}`" class="col-auto" style="color: inherit">
             {{metadata.title}}
           </router-link>
         </q-item-label>
@@ -87,11 +87,13 @@
 <script>
 import WriteReview from './WriteReview'
 import NotifyMixin from '../mixins/Notification.js'
+import DarkMode from '../mixins/DarkMode'
+
 
 export default {
   name: 'FavListItem',
 
-  mixins: [NotifyMixin],
+  mixins: [NotifyMixin, DarkMode],
 
   components: {
     WriteReview
