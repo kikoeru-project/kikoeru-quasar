@@ -11,26 +11,26 @@
             <q-menu anchor="bottom right" self="top right">
               <q-item clickable v-ripple @click="hideSeekButton = !hideSeekButton">
                 <q-item-section avatar>
-                  <q-icon :name="hideSeekButton ? 'done' : ''" />
+                  <q-icon :name="hideSeekButton ? 'check_box' : 'check_box_outline_blank'" />
                 </q-item-section>
 
                 <q-item-section>
                   隐藏封面按钮
                 </q-item-section>
               </q-item>
-              
+
               <q-item clickable v-ripple @click="swapSeekButton = !swapSeekButton">
                 <q-item-section avatar>
-                  <q-icon :name="swapSeekButton ? 'done' : ''" />
+                  <q-icon :name="swapSeekButton ? 'check_box' : 'check_box_outline_blank'" />
                 </q-item-section>
                 <q-item-section>
                   交换进度按钮与切换按钮
                 </q-item-section>
               </q-item>
-              
+
               <q-item clickable v-ripple @click="openWorkDetail()" v-close-popup>
                 <q-item-section avatar>
-                  <!-- placeholder -->
+                  <q-icon name="link" />
                 </q-item-section>
                 <q-item-section>
                   打开作品详情
@@ -86,7 +86,7 @@
         <!-- HTML5 volume in iOS is read-only -->
         <div class="row items-center q-mx-lg" style="height: 50px" v-if="!$q.platform.is.ios">
           <q-icon name="volume_down" size="sm" class="col-auto" />
-          <vue-slider 
+          <vue-slider
             v-model="volume"
             :min="0"
             :max="1"
@@ -104,7 +104,7 @@
     <!-- 加载本地字幕-->
     <q-dialog v-model="showLyricLoader">
       <q-card class="upload-subtitle">
-          <q-file filled v-model="localLyric" @input="onLyricFileLoaded" label="选择 LRC 字幕文件" accept=".lrc">
+          <q-file filled v-model="localLyric" @rejected="onLyricFileRejected" @input="onLyricFileLoaded" label="选择 LRC 字幕文件" accept=".lrc">
             <template v-slot:prepend>
               <q-icon name="cloud_upload" />
             </template>
@@ -122,7 +122,7 @@
           <q-space />
           <q-btn dense round size="md" icon="delete_forever" color="red" @click="emptyQueue()" style="height: 35px; width: 35px;" class="col-auto" />
         </div>
-        
+
         <q-separator />
 
         <!-- 音频文件列表 -->
@@ -171,6 +171,7 @@
 import draggable from 'vuedraggable'
 import AudioElement from 'components/AudioElement'
 import { mapState, mapGetters, mapMutations } from 'vuex'
+import Notification from "src/mixins/Notification";
 
 export default {
   name: 'AudioPlayer',
@@ -179,6 +180,8 @@ export default {
     draggable,
     AudioElement
   },
+
+  mixins: [Notification],
 
   data () {
     return {
@@ -313,7 +316,7 @@ export default {
       'rewindSeekTime',
       'forwardSeekTime'
     ]),
-    
+
     ...mapGetters('AudioPlayer', [
       'currentPlayingFile'
     ])
@@ -338,6 +341,10 @@ export default {
       'EMPTY_QUEUE',
       'SET_VOLUME'
     ]),
+
+    onLyricFileRejected() {
+      this.showWarnNotif("仅支持 .lrc 格式的字幕")
+    },
 
     onLyricFileLoaded (fileObject) {
       // 用户选择本地字幕后，更新到 vuex，AudioElement 接收
@@ -391,7 +398,7 @@ export default {
       } else {
         index = this.queueIndex
       }
-   
+
       this.SET_QUEUE({
         queue: this.queueCopy.concat(),
         index: index,
