@@ -64,7 +64,8 @@ export default {
       'rewindSeekTime',
       'forwardSeekTime',
       'rewindSeekMode',
-      'forwardSeekMode'
+      'forwardSeekMode',
+      'lyricContent'
     ]),
 
     ...mapGetters('AudioPlayer', [
@@ -73,6 +74,19 @@ export default {
   },
 
   watch: {
+    // reference this.loadLrcFile() AudioPlayer.localLyric()
+    lyricContent(lyricContent) {
+      console.log('LRC file loaded')
+      this.lrcObj.setLyric(lyricContent);
+      if (lyricContent) {
+        this.lrcAvailable = true;
+        this.playLrc(this.playing)
+      } else {
+        this.lrcAvailable = false;
+        this.SET_CURRENT_LYRIC('')
+      }
+    },
+
     playing (flag) {
       if (this.player.duration) {
         // 缓冲至可播放状态
@@ -123,7 +137,7 @@ export default {
      * 当 外部暂停（线控暂停、软件切换）、用户控制暂停、seek 时会触发本事件
      */
     onPause() {
-      // console.log('onPause')
+      console.log('onPause')
       this.playLrc(false)
       this.PAUSE()
     },
@@ -131,7 +145,7 @@ export default {
      * 当播放器真正开始播放时会触发本事件
      */
     onPlaying() {
-      // console.log('playing')
+      console.log('onPlaying')
       this.playLrc(true)
       this.PLAY()
     },
@@ -139,7 +153,7 @@ export default {
      * 当播放器缓冲区空，被迫暂停加载时会触发本事件
      */
     onWaiting() {
-      // console.log('waiting')
+      console.log('onWaiting')
       this.playLrc(false)
       this.PLAY()
     },
@@ -154,7 +168,8 @@ export default {
       'SET_VOLUME',
       'CLEAR_SLEEP_MODE',
       'SET_REWIND_SEEK_MODE',
-      'SET_FORWARD_SEEK_MODE'
+      'SET_FORWARD_SEEK_MODE',
+      'SET_LYRIC_CONTENT'
     ]),
 
     onCanplay () {
@@ -205,7 +220,7 @@ export default {
           break
         case "shuffle": {
           // 随机播放
-          const index = Math.floor(Math.random()*this.queue.length)
+          const index = Math.floor(Math.random() * this.queue.length)
           this.SET_TRACK(index)
           if (index === this.queueIndex) {
             this.player.currentTime = 0
@@ -259,20 +274,16 @@ export default {
         .then((response) => {
           if (response.data.result) {
             // 有lrc歌词文件
-            this.lrcAvailable = true;
             console.log('读入歌词');
             const lrcUrl = `/api/media/stream/${response.data.hash}?token=${token}`;
             this.$axios.get(lrcUrl)
               .then(response => {
                 console.log('歌词读入成功');
-                this.lrcObj.setLyric(response.data);
-                this.lrcObj.play(this.player.currentTime * 1000);
+                this.SET_LYRIC_CONTENT(response.data)
               });
           } else {
             // 无歌词文件
-            this.lrcAvailable = false;
-            this.lrcObj.setLyric('');
-            this.SET_CURRENT_LYRIC('');
+            this.SET_LYRIC_CONTENT('')
           }
         })
         .catch((error) => {

@@ -36,6 +36,15 @@
                   打开作品详情
                 </q-item-section>
               </q-item>
+
+              <q-item clickable v-ripple @click="() => {this.showLyricLoader = true}" v-close-popup>
+                <q-item-section avatar>
+                  <q-icon name="subtitles" />
+                </q-item-section>
+                <q-item-section>
+                  加载本地字幕
+                </q-item-section>
+              </q-item>
             </q-menu>
           </q-btn>
           <div class="row absolute q-pl-md q-pr-md col-12 justify-between">
@@ -91,6 +100,17 @@
         </div>
       </q-card>
     </q-slide-transition>
+
+    <!-- 加载本地字幕-->
+    <q-dialog v-model="showLyricLoader">
+      <q-card class="upload-subtitle">
+          <q-file filled v-model="localLyric" @input="onLyricFileLoaded" label="选择 LRC 字幕文件" accept=".lrc">
+            <template v-slot:prepend>
+              <q-icon name="cloud_upload" />
+            </template>
+          </q-file>
+      </q-card>
+    </q-dialog>
 
     <!-- 当前播放列表 -->
     <q-dialog v-model="showCurrentPlayList">
@@ -162,11 +182,13 @@ export default {
 
   data () {
     return {
+      showLyricLoader: false,
       showCurrentPlayList: false,
       editCurrentPlayList: false,
       queueCopy: [],
       hideSeekButton: false,
-      swapSeekButton: false
+      swapSeekButton: false,
+      localLyric: null,  // 这个变量并没有什么用，只是给 QFIle 自己看的，业务逻辑看 onLyricFileLoaded
     }
   },
 
@@ -180,6 +202,11 @@ export default {
   },
 
   watch: {
+    currentPlayingFile() {
+      // 播放文件发生变化时，清空字幕输入框
+      this.localLyric = null
+    },
+
     queue (val) {
       this.queueCopy = val.concat()
       // 在删除最后一个 track 时关闭当前播放列表
@@ -301,7 +328,8 @@ export default {
       changePlayMode: 'CHANGE_PLAY_MODE',
       setVolume: 'SET_VOLUME',
       rewind: 'SET_REWIND_SEEK_MODE',
-      forward: 'SET_FORWARD_SEEK_MODE'
+      forward: 'SET_FORWARD_SEEK_MODE',
+      setLyricContent: 'SET_LYRIC_CONTENT'
     }),
     ...mapMutations('AudioPlayer', [
       'SET_TRACK',
@@ -310,6 +338,16 @@ export default {
       'EMPTY_QUEUE',
       'SET_VOLUME'
     ]),
+
+    onLyricFileLoaded (fileObject) {
+      // 用户选择本地字幕后，更新到 vuex，AudioElement 接收
+      let reader = new FileReader()
+      reader.onloadend = () => {
+        this.setLyricContent(reader.result);
+      }
+      reader.readAsText(fileObject)
+      this.showLyricLoader = false
+    },
 
     formatSeconds (seconds) {
       let h = Math.floor(seconds / 3600) < 10
@@ -404,6 +442,18 @@ export default {
     }
   }
 
+  .upload-subtitle {
+    max-height: 500px;
+
+    // 宽度 > $breakpoint-xs-max
+    @media (min-width: $breakpoint-xs-max) {
+      width: 450px;
+    }
+    // 宽度 < $breakpoint-xs-max (599px)
+    @media (max-width: $breakpoint-xs-max) {
+      min-width: 280px;
+    }
+  }
   .current-play-list {
     max-height: 500px;
 

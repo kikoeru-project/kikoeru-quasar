@@ -43,7 +43,7 @@ const mutations = {
 
     if (payload.resetPlaying) {
       state.playing = true
-    }    
+    }
   },
   EMPTY_QUEUE: (state) => {
     state.playing = false
@@ -61,7 +61,7 @@ const mutations = {
       state.queueIndex = 0
     } else if (index < state.queueIndex) {
       state.queueIndex -= 1
-    } 
+    }
   },
 
 
@@ -135,6 +135,10 @@ const mutations = {
   CLEAR_SLEEP_MODE: (state) => {
     state.sleepTime = null
     state.sleepMode = false
+  },
+
+  SET_LYRIC_CONTENT: (state, lyricFile) => {
+    state.lyricContent = lyricFile
   }
 }
 
